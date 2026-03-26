@@ -1,0 +1,16 @@
+[Unit]
+Description=MowBot GUI + Stack
+After=docker.service
+Requires=docker.service
+
+[Service]
+WorkingDirectory=/home/farmbot/mowbot-deploy
+ExecStartPre=/usr/bin/docker compose pull
+ExecStartPre=/usr/bin/docker compose create
+ExecStart=/usr/bin/docker compose up mowbot_gui
+ExecStop=/usr/bin/docker compose down
+Restart=on-failure
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

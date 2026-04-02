@@ -4,7 +4,7 @@ After=docker.service
 Requires=docker.service
 
 [Service]
-WorkingDirectory=/home/farmbot/mowbot-deploy
+WorkingDirectory=${HOME}/mowbot-setup
 ExecStartPre=/usr/bin/docker compose pull
 ExecStartPre=/usr/bin/docker compose create
 ExecStart=/usr/bin/docker compose up mowbot_gui

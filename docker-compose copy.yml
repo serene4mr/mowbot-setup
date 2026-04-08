@@ -9,7 +9,7 @@ services:
     environment:
       # If started by systemd, DISPLAY might be empty, so we default to :0
       - DISPLAY=${DISPLAY:-:0}
-      - MB_GUI_CONFIG=/etc/mowbot_data/gui/config.yaml
+      - MOWBOT_GUI_CONFIG=/etc/mowbot_data/gui/config.yaml
       - QTWEBENGINE_DISABLE_SANDBOX=1
     volumes:
       - /dev:/dev
@@ -42,7 +42,6 @@ services:
       # - RMW_IMPLEMENTATION=rmw_fastrtps_cpp  # uncomment if you want to force
     volumes:
       - ${HOME}/mowbot_data:/etc/mowbot_data
-      - /dev:/dev
     network_mode: host
     ipc: host # share host SHM for Fast DDS/Cyclone DDS
     pid: host # optional but recommended with SHM
@@ -52,19 +51,19 @@ services:
       - -lc
       - |
         # Escape $ so Compose doesn't interpolate at parse-time; container bash expands it.
-        source /opt/ros/$$ROS_DISTRO/setup.bash && \
-        source /opt/mowbot/setup.bash && \
+        source /opt/ros/$$ROS_DISTRO/setup.bash
         # debug: show ROS env
         env | grep -E 'ROS_|RMW' || true
         # launch bringup and sensing
-        ros2 launch mowbot_launch mowbot.launch.py \
-          robot_id:=${MB_ROBOT_ID:-mowbot_001} \
-          robot_model:=${MB_ROBOT_MODEL:-mowbot_model_t2} \
-          sensor_model:=${MB_SENSOR_MODEL:-mowbot_sensor_kit_t2} \
-          manufacturer:=${MB_MANUFACTURER:-MowbotTech} \
-          data_path:=/etc/mowbot_data \
-          launch_robot:=true launch_sensing:=true launch_sensing_driver:=true \
-          launch_localization:=false launch_nav2:=false launch_app:=false
+        ros2 topic pub -r 1 /test_mowbot_bringup_and_sensing std_msgs/msg/String "{data: 'mowbot_bringup_and_sensing up'}"
+      # ros2 launch mowbot_launch mowbot.launch.py \
+      #   robot_id:=${MB_ROBOT_ID:-mowbot_001} \
+      #   robot_model:=${MB_ROBOT_MODEL:-mowbot_model_t2} \
+      #   sensor_model:=${MB_SENSOR_MODEL:-mowbot_sensor_kit_t2} \
+      #   manufacturer:=${MB_MANUFACTURER:-unknown} \
+      #   data_path:=/etc/mowbot_data \
+      #   launch_robot:=true launch_sensing:=true launch_sensing_driver:=true \
+      #   launch_localization:=false launch_nav2:=false launch_app:=false
 
   mowbot_localization:
     image: ghcr.io/serene4mr/mowbot:main-cuda-latest
@@ -91,7 +90,7 @@ services:
           robot_id:=${MB_ROBOT_ID:-mowbot_001} \
           robot_model:=${MB_ROBOT_MODEL:-mowbot_model_t2} \
           sensor_model:=${MB_SENSOR_MODEL:-mowbot_sensor_kit_t2} \
-          manufacturer:=${MB_MANUFACTURER:-MowbotTech} \
+          manufacturer:=${MB_MANUFACTURER:-unknown} \
           data_path:=/etc/mowbot_data \
           launch_robot:=false launch_sensing:=false launch_sensing_driver:=false \
           launch_localization:=true launch_nav2:=false launch_app:=false
@@ -122,7 +121,7 @@ services:
           robot_id:=${MB_ROBOT_ID:-mowbot_001} \
           robot_model:=${MB_ROBOT_MODEL:-mowbot_model_t2} \
           sensor_model:=${MB_SENSOR_MODEL:-mowbot_sensor_kit_t2} \
-          manufacturer:=${MB_MANUFACTURER:-MowbotTech} \
+          manufacturer:=${MB_MANUFACTURER:-unknown} \
           data_path:=/etc/mowbot_data \
           launch_robot:=false launch_sensing:=false launch_sensing_driver:=false \
           launch_localization:=false launch_nav2:=true launch_app:=false
@@ -152,7 +151,7 @@ services:
           robot_id:=${MB_ROBOT_ID:-mowbot_001} \
           robot_model:=${MB_ROBOT_MODEL:-mowbot_model_t2} \
           sensor_model:=${MB_SENSOR_MODEL:-mowbot_sensor_kit_t2} \
-          manufacturer:=${MB_MANUFACTURER:-MowbotTech} \
+          manufacturer:=${MB_MANUFACTURER:-unknown} \
           data_path:=/etc/mowbot_data \
           launch_robot:=false launch_sensing:=false launch_sensing_driver:=false \
           launch_localization:=false launch_nav2:=false launch_app:=true

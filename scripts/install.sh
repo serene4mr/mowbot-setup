@@ -37,6 +37,83 @@ listener 1883
 allow_anonymous true
 EOF'
 
+# Optional: HiveMQ Cloud bridge configuration
+if [ -z "${ENABLE_HIVEMQ_BRIDGE:-}" ]; then
+    read -p "Configure HiveMQ bridge forwarding? y/N (default: N): " INPUT_ENABLE_HIVEMQ_BRIDGE
+else
+    INPUT_ENABLE_HIVEMQ_BRIDGE="$ENABLE_HIVEMQ_BRIDGE"
+fi
+case "${INPUT_ENABLE_HIVEMQ_BRIDGE,,}" in
+    y|yes|true|1)
+        if [ -z "${HIVEMQ_BRIDGE_ADDRESS:-}" ]; then
+            read -p "Enter HiveMQ broker address host:port: " INPUT_HIVEMQ_BRIDGE_ADDRESS
+            HIVEMQ_BRIDGE_ADDRESS_VALUE="$INPUT_HIVEMQ_BRIDGE_ADDRESS"
+        else
+            HIVEMQ_BRIDGE_ADDRESS_VALUE="$HIVEMQ_BRIDGE_ADDRESS"
+        fi
+
+        if [ -z "${HIVEMQ_USERNAME:-}" ]; then
+            read -p "Enter HiveMQ username: " INPUT_HIVEMQ_USERNAME
+            HIVEMQ_USERNAME_VALUE="$INPUT_HIVEMQ_USERNAME"
+        else
+            HIVEMQ_USERNAME_VALUE="$HIVEMQ_USERNAME"
+        fi
+
+        if [ -z "${HIVEMQ_PASSWORD:-}" ]; then
+            read -sp "Enter HiveMQ password: " INPUT_HIVEMQ_PASSWORD
+            echo ""
+            HIVEMQ_PASSWORD_VALUE="$INPUT_HIVEMQ_PASSWORD"
+        else
+            HIVEMQ_PASSWORD_VALUE="$HIVEMQ_PASSWORD"
+        fi
+
+        if [ -z "$HIVEMQ_BRIDGE_ADDRESS_VALUE" ] || [ -z "$HIVEMQ_USERNAME_VALUE" ] || [ -z "$HIVEMQ_PASSWORD_VALUE" ]; then
+            echo "HiveMQ bridge enabled, but address/username/password is empty. Skipping bridge file."
+        else
+            TMP_BRIDGE_CONF="$(mktemp)"
+            {
+                echo "# Bridge connection to HiveMQ Cloud"
+                echo "connection hivemq_cloud_bridge"
+                echo ""
+                echo "# HiveMQ Cloud broker"
+                printf "address %s\n" "$HIVEMQ_BRIDGE_ADDRESS_VALUE"
+                echo ""
+                echo "# Your credentials"
+                printf "remote_username %s\n" "$HIVEMQ_USERNAME_VALUE"
+                printf "remote_password %s\n" "$HIVEMQ_PASSWORD_VALUE"
+                echo ""
+                echo "# TLS Configuration"
+                echo "bridge_capath /etc/ssl/certs/"
+                echo "bridge_insecure false"
+                echo ""
+                echo "# Protocol"
+                echo "bridge_protocol_version mqttv311"
+                echo ""
+                echo "# Required for HiveMQ Cloud"
+                echo "try_private false"
+                echo "notifications false"
+                echo "bridge_attempt_unsubscribe false"
+                echo ""
+                echo "# Session settings"
+                echo "cleansession false"
+                echo ""
+                echo "# Auto-connect"
+                echo "start_type automatic"
+                echo "restart_timeout 30"
+                echo ""
+                echo "# Bidirectional sync: messages flow BOTH ways"
+                echo "topic # both 1"
+            } > "$TMP_BRIDGE_CONF"
+            sudo install -m 600 "$TMP_BRIDGE_CONF" /etc/mosquitto/conf.d/hivemq-bridge.conf
+            rm -f "$TMP_BRIDGE_CONF"
+            echo "Configured /etc/mosquitto/conf.d/hivemq-bridge.conf"
+        fi
+        ;;
+    *)
+        echo "Skipping HiveMQ bridge setup."
+        ;;
+esac
+
 sudo systemctl enable mosquitto
 sudo systemctl restart mosquitto
 

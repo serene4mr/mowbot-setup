@@ -8,7 +8,7 @@ cd "$DIR"
 
 # Docker should already be logged in perfectly from install.sh
 echo "Pulling latest Docker images from ghcr.io..."
-docker compose pull
+docker compose --env-file mowbot.env pull
 
 echo "Restarting service to apply updates..."
 sudo systemctl restart mowbot.service

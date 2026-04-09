@@ -4,11 +4,16 @@ After=docker.service
 Requires=docker.service
 
 [Service]
-WorkingDirectory=${HOME}/mowbot-setup
-ExecStartPre=/usr/bin/docker compose pull
-ExecStartPre=/usr/bin/docker compose create
-ExecStart=/usr/bin/docker compose up mowbot_gui
-ExecStop=/usr/bin/docker compose down
+Type=simple
+# User/Group are overwritten by scripts/install.sh to match the installing account.
+User=farmbot
+Group=farmbot
+# User= does not inherit docker group membership unless listed here (docker.sock access).
+SupplementaryGroups=docker
+WorkingDirectory=%h/mowbot-setup
+Environment=HOME=%h
+ExecStart=/usr/bin/docker compose --env-file mowbot.env -f docker-compose.yml up mowbot_gui
+ExecStop=/usr/bin/docker compose --env-file mowbot.env -f docker-compose.yml stop -t 30 mowbot_gui
 Restart=on-failure
 RestartSec=10
 

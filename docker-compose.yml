@@ -9,15 +9,21 @@ services:
     environment:
       # If started by systemd, DISPLAY might be empty, so we default to :0
       - DISPLAY=${DISPLAY:-:0}
-      - MBGUI_CONFIG=/etc/mowbot_data/gui/config.yaml
       - QTWEBENGINE_DISABLE_SANDBOX=1
+      - MBGUI_CONFIG=/etc/mowbot_data/gui/config.yaml
+      - MBGUI_SERIAL_NUMBER=${MB_ROBOT_ID:-mowbot_001}
+      - MBGUI_MQTT_HOST=${MB_MQTT_HOST:-localhost}
+      - MBGUI_MQTT_PORT=${MB_MQTT_PORT:-1883}
+      - MBGUI_MQTT_USE_TLS=${MB_MQTT_USE_TLS:-false}
+      - MBGUI_MQTT_USER=${MB_MQTT_USER:-}
+      - MBGUI_MQTT_PASSWORD=${MB_MQTT_PASSWORD:-}
     volumes:
       - /dev:/dev
       - /dev/shm:/dev/shm
       - /tmp/.X11-unix:/tmp/.X11-unix
       - /var/run/docker.sock:/var/run/docker.sock
       - ${HOME}/mowbot_data:/etc/mowbot_data
-    # restart: always
+    restart: always
     command: [ "python3", "/mowbot-gui/src/main.py" ]
 
   mowbot_uros_agent:

@@ -4,12 +4,12 @@ set -e
 echo "Uninstalling Mowbot Stack..."
 
 # 1. Stop and disable systemd service
-if systemctl is-active --quiet mowbot.service; then
+if sudo systemctl is-active --quiet mowbot.service; then
     echo "Stopping mowbot.service..."
     sudo systemctl stop mowbot.service
 fi
 
-if systemctl is-enabled --quiet mowbot.service; then
+if sudo systemctl is-enabled --quiet mowbot.service; then
     echo "Disabling mowbot.service..."
     sudo systemctl disable mowbot.service
 fi
@@ -21,7 +21,7 @@ sudo systemctl daemon-reload
 echo "Stopping Docker containers..."
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." &> /dev/null && pwd)"
 cd "$DIR"
-docker compose down || true
+docker compose --env-file mowbot.env down || true
 
 # 3. Optional: Uninstall Mosquitto
 read -p "Do you want to uninstall Mosquitto MQTT from the host? (y/N): " UNINSTALL_MQTT

@@ -6,12 +6,15 @@ Requires=docker.service
 [Service]
 Type=simple
 # User/Group are overwritten by scripts/install.sh to match the installing account.
-User=farmbot
-Group=farmbot
+User=
+Group=
 # User= does not inherit docker group membership unless listed here (docker.sock access).
 SupplementaryGroups=docker
 WorkingDirectory=%h/mowbot-setup
 Environment=HOME=%h
+Environment=DISPLAY=:0
+Environment=XAUTHORITY=%h/.Xauthority
+ExecStartPre=/bin/bash -lc 'if [ -S /tmp/.X11-unix/X0 ]; then /usr/bin/xhost +local:docker || true; fi'
 ExecStart=/usr/bin/docker compose --env-file mowbot.env -f docker-compose.yml up mowbot_gui
 ExecStop=/usr/bin/docker compose --env-file mowbot.env -f docker-compose.yml stop -t 30 mowbot_gui
 Restart=on-failure

@@ -185,7 +185,7 @@ DIR_ESC="${DIR//&/\\&}"
 sed -e "s|^User=.*|User=$SVC_USER|" \
     -e "s|^Group=.*|Group=$SVC_GROUP|" \
     -e "s|WorkingDirectory=.*|WorkingDirectory=$DIR_ESC|" \
-    "$DIR/mowbot.service" | sudo tee "$SERVICE_FILE" > /dev/null
+    "$DIR/mowbot.service.example" | sudo tee "$SERVICE_FILE" > /dev/null
 
 # 7. Enable and start service
 echo "Enabling and starting Mowbot service..."

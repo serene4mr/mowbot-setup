@@ -30,6 +30,23 @@ if ! docker info >/dev/null 2>&1; then
     exit 1
 fi
 
+# 2b. udev rules for stable robot device symlinks
+UDEV_RULE_SRC="$DIR/udev/99-mowbot-udev.rules"
+UDEV_RULE_DST="/etc/udev/rules.d/99-mowbot-udev.rules"
+if [ -f "$UDEV_RULE_SRC" ]; then
+    echo "Installing Mowbot udev rules..."
+    sudo install -m 644 "$UDEV_RULE_SRC" "$UDEV_RULE_DST"
+    echo "Reloading udev rules..."
+    if ! sudo udevadm control --reload-rules; then
+        echo "udevadm reload failed, restarting systemd-udevd..."
+        sudo systemctl restart systemd-udevd
+        sudo udevadm control --reload-rules
+    fi
+    sudo udevadm trigger
+else
+    echo "Warning: udev rules file not found at $UDEV_RULE_SRC. Skipping udev setup."
+fi
+
 echo "Installing Mosquitto MQTT..."
 sudo apt-get update && sudo apt-get install -y mosquitto mosquitto-clients
 
@@ -164,26 +181,34 @@ fi
 echo "Logging into ghcr.io..."
 echo "$GHCR_PAT" | docker login ghcr.io -u "$GHCR_USERNAME" --password-stdin
 
+# Resolve the target service user once; used for compose, systemd, and home path.
+# When run via sudo we want the real user, not root.
+if [ -n "${SUDO_USER:-}" ] && id -u "$SUDO_USER" >/dev/null 2>&1; then
+    SVC_USER="$SUDO_USER"
+else
+    SVC_USER="$(id -un)"
+fi
+SVC_GROUP="$(id -gn "$SVC_USER")"
+SVC_UID="$(id -u "$SVC_USER")"
+# Use getent for the authoritative home directory (handles non-standard homes).
+SVC_HOME="$(getent passwd "$SVC_USER" | cut -d: -f6)"
+if [ "$SVC_USER" = "root" ]; then
+    echo "Warning: systemd User=root. Prefer running install as a normal user (use sudo only for apt/systemctl steps), or edit $SERVICE_FILE."
+fi
+
 # 5. Pull latest images (same env file as systemd / manual: docker compose --env-file mowbot.env)
 echo "Pulling latest Docker images..."
-docker compose --env-file mowbot.env pull
+HOME="$SVC_HOME" docker compose --env-file mowbot.env pull
+
+# 5b. Create containers ahead of service start
+echo "Creating Docker containers..."
+HOME="$SVC_HOME" docker compose --env-file mowbot.env -f docker-compose.yml create
 
 # 6. Setup systemd service
 SERVICE_FILE="/etc/systemd/system/mowbot.service"
 
 echo "Configuring systemd service in $SERVICE_FILE..."
-# Service user: the account that should own compose (invoking user, or SUDO_USER when using sudo).
-if [ -n "${SUDO_USER:-}" ] && id -u "$SUDO_USER" >/dev/null 2>&1; then
-    SVC_USER="$SUDO_USER"
-    SVC_GROUP="$(id -gn "$SUDO_USER")"
-else
-    SVC_USER="$(id -un)"
-    SVC_GROUP="$(id -gn)"
-fi
-if [ "$SVC_USER" = "root" ]; then
-    echo "Warning: systemd User=root. Prefer running install as a normal user (use sudo only for apt/systemctl steps), or edit $SERVICE_FILE."
-fi
-# Point WorkingDirectory at this clone; escape & for sed replacement
+# Point WorkingDirectory at this clone; escape & for sed replacement.
 DIR_ESC="${DIR//&/\\&}"
 sed -e "s|^User=.*|User=$SVC_USER|" \
     -e "s|^Group=.*|Group=$SVC_GROUP|" \

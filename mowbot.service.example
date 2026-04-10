@@ -13,10 +13,21 @@ SupplementaryGroups=docker
 WorkingDirectory=%h/mowbot-setup
 Environment=HOME=%h
 Environment=DISPLAY=:0
-Environment=XAUTHORITY=%h/.Xauthority
-ExecStartPre=/bin/bash -lc 'if [ -S /tmp/.X11-unix/X0 ]; then /usr/bin/xhost +local:docker || true; fi'
-ExecStart=/usr/bin/docker compose --env-file mowbot.env -f docker-compose.yml up mowbot_gui
-ExecStop=/usr/bin/docker compose --env-file mowbot.env -f docker-compose.yml stop -t 30 mowbot_gui
+# Detect the real Xauthority at start time and write it to a runtime env file.
+# This handles GDM (/run/user/<uid>/gdm/Xauthority), LightDM (~/.Xauthority),
+# and other display managers without needing to bake a path at install time.
+ExecStartPre=/bin/bash -c '\
+  for f in \
+    /run/user/$(id -u)/gdm/Xauthority \
+    ${HOME}/.Xauthority \
+    /run/user/$(id -u)/.mutter-Xwaylandauth* \
+  ; do \
+    [ -f "$f" ] && { echo "XAUTHORITY=$f" > /run/mowbot-xauth.env; break; }; \
+  done'
+EnvironmentFile=-/run/mowbot-xauth.env
+ExecStartPre=/bin/bash -c 'if [ -S /tmp/.X11-unix/X0 ]; then /usr/bin/xhost +local:docker || true; fi'
+ExecStart=/usr/libexec/docker/cli-plugins/docker-compose --env-file mowbot.env -f docker-compose.yml up mowbot_gui
+ExecStop=/usr/libexec/docker/cli-plugins/docker-compose --env-file mowbot.env -f docker-compose.yml stop -t 30 mowbot_gui
 Restart=on-failure
 RestartSec=10
 

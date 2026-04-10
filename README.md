@@ -20,16 +20,16 @@ If `GHCR_USERNAME`/`GHCR_PAT` are not provided, the installer prompts for them.
 4. Creates `mowbot.env` (or reuses/migrates existing env files).
 5. Logs in to `ghcr.io` with the provided credentials.
 6. Pulls images with `docker compose --env-file mowbot.env pull`.
-7. Installs `/etc/systemd/system/mowbot.service` and sets:
+7. Installs `/etc/systemd/system/mowbot_gui.service` and sets:
    - `User`/`Group` to the installing user
    - `WorkingDirectory` to this clone path
-8. Reloads systemd, enables, and restarts `mowbot.service`.
+8. Reloads systemd, enables, and restarts `mowbot_gui.service`.
 
 ### Verify
 
 ```bash
-sudo systemctl status mowbot.service
-journalctl -u mowbot.service -f
+sudo systemctl status mowbot_gui.service
+journalctl -u mowbot_gui.service -f
 docker compose --env-file mowbot.env ps
 ```
 
@@ -88,14 +88,14 @@ ls -l /dev/MB-*
 
 1. Switches to the repository root.
 2. Pulls latest images with `docker compose --env-file mowbot.env pull`.
-3. Restarts `mowbot.service` with `sudo systemctl restart mowbot.service`.
+3. Restarts `mowbot_gui.service` with `sudo systemctl restart mowbot_gui.service`.
 
 ### Verify
 
 ```bash
-sudo systemctl status mowbot.service
+sudo systemctl status mowbot_gui.service
 docker compose --env-file mowbot.env ps
-journalctl -u mowbot.service -n 50 --no-pager
+journalctl -u mowbot_gui.service -n 50 --no-pager
 ```
 
 ### Notes
@@ -112,15 +112,15 @@ journalctl -u mowbot.service -n 50 --no-pager
 
 ### What It Does
 
-1. Stops and disables `mowbot.service` if present.
-2. Removes `/etc/systemd/system/mowbot.service` and reloads systemd.
+1. Stops and disables `mowbot_gui.service` if present.
+2. Removes `/etc/systemd/system/mowbot_gui.service` and reloads systemd.
 3. Brings down containers with `docker compose --env-file mowbot.env down`.
 4. Optionally removes Mosquitto packages and config (prompted).
 
 ### Verify
 
 ```bash
-sudo systemctl status mowbot.service || true
+sudo systemctl status mowbot_gui.service || true
 docker compose --env-file mowbot.env ps
 ```
 

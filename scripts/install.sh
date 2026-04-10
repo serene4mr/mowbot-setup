@@ -137,7 +137,7 @@ esac
 sudo systemctl enable mosquitto
 sudo systemctl restart mosquitto
 
-# 3. Machine config: mowbot.env (same file as mowbot.service --env-file and mowbot.env.example)
+# 3. Machine config: mowbot.env (same file as mowbot_gui.service --env-file and mowbot.env.example)
 ENV_FILE="mowbot.env"
 if [ -f "$ENV_FILE" ]; then
     echo "Found existing $ENV_FILE, skipping hardware provisioning."
@@ -205,7 +205,8 @@ echo "Creating Docker containers..."
 HOME="$SVC_HOME" docker compose --env-file mowbot.env -f docker-compose.yml create
 
 # 6. Setup systemd service
-SERVICE_FILE="/etc/systemd/system/mowbot.service"
+SERVICE_NAME="mowbot_gui.service"
+SERVICE_FILE="/etc/systemd/system/$SERVICE_NAME"
 
 echo "Configuring systemd service in $SERVICE_FILE..."
 # Point WorkingDirectory at this clone; escape & for sed replacement.
@@ -213,13 +214,13 @@ DIR_ESC="${DIR//&/\\&}"
 sed -e "s|^User=.*|User=$SVC_USER|" \
     -e "s|^Group=.*|Group=$SVC_GROUP|" \
     -e "s|WorkingDirectory=.*|WorkingDirectory=$DIR_ESC|" \
-    "$DIR/mowbot.service.example" | sudo tee "$SERVICE_FILE" > /dev/null
+    "$DIR/mowbot_gui.service.example" | sudo tee "$SERVICE_FILE" > /dev/null
 
 # 7. Enable and start service
 echo "Enabling and starting Mowbot service..."
 sudo systemctl daemon-reload
-sudo systemctl enable mowbot.service
-sudo systemctl restart mowbot.service
+sudo systemctl enable "$SERVICE_NAME"
+sudo systemctl restart "$SERVICE_NAME"
 
 echo "Mowbot installation complete! You can view live system status using:"
-echo "sudo systemctl status mowbot.service"
+echo "sudo systemctl status $SERVICE_NAME"

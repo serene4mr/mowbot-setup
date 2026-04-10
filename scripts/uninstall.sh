@@ -4,17 +4,17 @@ set -e
 echo "Uninstalling Mowbot Stack..."
 
 # 1. Stop and disable systemd service
-if sudo systemctl is-active --quiet mowbot.service; then
-    echo "Stopping mowbot.service..."
-    sudo systemctl stop mowbot.service
+if sudo systemctl is-active --quiet mowbot_gui.service; then
+    echo "Stopping mowbot_gui.service..."
+    sudo systemctl stop mowbot_gui.service
 fi
 
-if sudo systemctl is-enabled --quiet mowbot.service; then
-    echo "Disabling mowbot.service..."
-    sudo systemctl disable mowbot.service
+if sudo systemctl is-enabled --quiet mowbot_gui.service; then
+    echo "Disabling mowbot_gui.service..."
+    sudo systemctl disable mowbot_gui.service
 fi
 
-sudo rm -f /etc/systemd/system/mowbot.service
+sudo rm -f /etc/systemd/system/mowbot_gui.service
 sudo systemctl daemon-reload
 
 # 2. Stop Docker containers

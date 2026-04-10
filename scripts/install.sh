@@ -196,6 +196,25 @@ if [ "$SVC_USER" = "root" ]; then
     echo "Warning: systemd User=root. Prefer running install as a normal user (use sudo only for apt/systemctl steps), or edit $SERVICE_FILE."
 fi
 
+# Standard host data path for all services.
+DATA_HOST_DIR="/etc/mowbot_data"
+DATA_REPO_URL="https://github.com/serene4mr/mowbot_data"
+echo "Ensuring host data directory exists at $DATA_HOST_DIR ..."
+if [ ! -d "$DATA_HOST_DIR/.git" ]; then
+    if [ -d "$DATA_HOST_DIR" ] && [ -n "$(ls -A "$DATA_HOST_DIR" 2>/dev/null)" ]; then
+        echo "Error: $DATA_HOST_DIR exists and is not an empty git repo."
+        echo "Please back it up or clear it, then re-run install."
+        exit 1
+    fi
+    sudo rm -rf "$DATA_HOST_DIR"
+    echo "Cloning mowbot_data to $DATA_HOST_DIR ..."
+    sudo git clone "$DATA_REPO_URL" "$DATA_HOST_DIR"
+else
+    echo "Updating mowbot_data at $DATA_HOST_DIR ..."
+    sudo git -C "$DATA_HOST_DIR" pull --ff-only
+fi
+sudo chown -R "$SVC_USER:$SVC_GROUP" "$DATA_HOST_DIR"
+
 # 5. Pull latest images (same env file as systemd / manual: docker compose --env-file mowbot.env)
 echo "Pulling latest Docker images..."
 HOME="$SVC_HOME" docker compose --env-file mowbot.env pull

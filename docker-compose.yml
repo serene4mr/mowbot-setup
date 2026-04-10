@@ -22,7 +22,7 @@ services:
       - /dev/shm:/dev/shm
       - /tmp/.X11-unix:/tmp/.X11-unix
       - /var/run/docker.sock:/var/run/docker.sock
-      - ${HOME}/mowbot_data:/etc/mowbot_data
+      - /etc/mowbot_data:/etc/mowbot_data
     restart: always
     command: [ "python3", "/mowbot-gui/src/main.py" ]
 
@@ -47,7 +47,7 @@ services:
       - ROS_LOCALHOST_ONLY=0 # ensure DDS not restricted to loopback
       # - RMW_IMPLEMENTATION=rmw_fastrtps_cpp  # uncomment if you want to force
     volumes:
-      - ${HOME}/mowbot_data:/etc/mowbot_data
+      - /etc/mowbot_data:/etc/mowbot_data
       - /dev:/dev
     network_mode: host
     ipc: host # share host SHM for Fast DDS/Cyclone DDS
@@ -81,7 +81,7 @@ services:
       - ROS_LOCALHOST_ONLY=0
       # - RMW_IMPLEMENTATION=rmw_fastrtps_cpp
     volumes:
-      - ${HOME}/mowbot_data:/etc/mowbot_data
+      - /etc/mowbot_data:/etc/mowbot_data
     network_mode: host
     ipc: host
     pid: host
@@ -111,7 +111,7 @@ services:
       - ROS_LOCALHOST_ONLY=0
       # - RMW_IMPLEMENTATION=rmw_fastrtps_cpp
     volumes:
-      - ${HOME}/mowbot_data:/etc/mowbot_data
+      - /etc/mowbot_data:/etc/mowbot_data
     network_mode: host
     ipc: host
     pid: host
@@ -142,7 +142,7 @@ services:
       - ROS_LOCALHOST_ONLY=0
       # - RMW_IMPLEMENTATION=rmw_fastrtps_cpp
     volumes:
-      - ${HOME}/mowbot_data:/etc/mowbot_data
+      - /etc/mowbot_data:/etc/mowbot_data
     network_mode: host
     ipc: host
     pid: host

@@ -18,6 +18,9 @@ if [ -z "$GHCR_USERNAME" ] || [ -z "$GHCR_PAT" ]; then
 fi
 
 # 2. Prerequisites
+sudo apt-get update
+sudo apt-get install -y docker-compose-plugin
+
 if ! command -v docker >/dev/null 2>&1; then
     echo "Docker is not installed. Install Docker Engine first, then re-run this script."
     exit 1

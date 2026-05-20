@@ -38,7 +38,7 @@ services:
       - "8888"
 
   mowbot_bringup_and_sensing:
-    image: ghcr.io/serene4mr/mowbot:main-cuda-latest
+    image: ghcr.io/serene4mr/mowbot:devel-jetson-l4t-r36.4-latest
     container_name: mowbot_bringup_and_sensing
     # Keep the image's entrypoint (likely does ROS setup); only override command.
     environment:
@@ -73,7 +73,7 @@ services:
           launch_localization:=false launch_nav2:=false launch_app:=false
 
   mowbot_localization:
-    image: ghcr.io/serene4mr/mowbot:main-cuda-latest
+    image: ghcr.io/serene4mr/mowbot:devel-jetson-l4t-r36.4-latest
     container_name: mowbot_localization
     environment:
       - ROS_DISTRO=${ROS_DISTRO:-humble}
@@ -103,7 +103,7 @@ services:
           launch_localization:=true launch_nav2:=false launch_app:=false
 
   mowbot_navigation:
-    image: ghcr.io/serene4mr/mowbot:main-cuda-latest
+    image: ghcr.io/serene4mr/mowbot:devel-jetson-l4t-r36.4-latest
     container_name: mowbot_navigation
     environment:
       - ROS_DISTRO=${ROS_DISTRO:-humble}
@@ -134,7 +134,7 @@ services:
           launch_localization:=false launch_nav2:=true launch_app:=false
 
   mowbot_app:
-    image: ghcr.io/serene4mr/mowbot:main-cuda-latest
+    image: ghcr.io/serene4mr/mowbot:devel-jetson-l4t-r36.4-latest
     container_name: mowbot_app
     environment:
       - ROS_DISTRO=${ROS_DISTRO:-humble}

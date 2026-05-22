@@ -87,8 +87,10 @@ ls -l /dev/MB-*
 ### What It Does
 
 1. Switches to the repository root.
-2. Pulls latest images with `docker compose --env-file mowbot.env pull`.
-3. Restarts `mowbot_gui.service` with `sudo systemctl restart mowbot_gui.service`.
+2. Optionally re-runs the `mowbot.env` prompts from install (robot ID/model, MQTT settings); press Enter to keep each current value.
+3. Pulls latest images with `docker compose --env-file mowbot.env pull`.
+4. Recreates the ROS stack containers (`mowbot_uros_agent`, bringup, localization, navigation, app) with `up --force-recreate --no-start` (new images, left stopped).
+5. Restarts `mowbot_gui.service` with `sudo systemctl restart mowbot_gui.service`.
 
 ### Verify
 
@@ -101,6 +103,7 @@ journalctl -u mowbot_gui.service -n 50 --no-pager
 ### Notes
 
 - Update assumes the stack was installed first and `mowbot.env` exists.
+- After update, start stack containers when ready, e.g. `docker start mowbot_uros_agent mowbot_bringup_and_sensing mowbot_localization mowbot_navigation mowbot_app`.
 
 ## Uninstall
 
@@ -113,9 +116,10 @@ journalctl -u mowbot_gui.service -n 50 --no-pager
 ### What It Does
 
 1. Stops and disables `mowbot_gui.service` if present.
-2. Removes `/etc/systemd/system/mowbot_gui.service` and reloads systemd.
+2. Removes `/etc/systemd/system/mowbot_gui.service`, reloads systemd, and deletes `/tmp/mowbot-xauth.env`.
 3. Brings down containers with `docker compose --env-file mowbot.env down`.
-4. Optionally removes Mosquitto packages and config (prompted).
+4. Optionally removes `mowbot.env` / `.env` (prompted; created by `install.sh`).
+5. Optionally removes Mosquitto packages and config, including `hivemq-bridge.conf` if present (prompted).
 
 ### Verify
 
@@ -126,4 +130,6 @@ docker compose --env-file mowbot.env ps
 
 ### Notes
 
-- The Mosquitto removal step is optional and only runs if you confirm the prompt.
+- `mowbot.env` removal is optional (default: keep) so you can reinstall without re-entering robot/MQTT settings.
+- Mosquitto removal is optional and only runs if you confirm the prompt.
+- Install also creates `/etc/mowbot_data` and udev rules; uninstall does not remove those (use backups or manual cleanup if needed).

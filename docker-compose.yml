@@ -162,3 +162,14 @@ services:
           data_path:=/etc/mowbot_data \
           launch_robot:=false launch_sensing:=false launch_sensing_driver:=false \
           launch_localization:=false launch_nav2:=false launch_app:=true
+
+  mowbot_config_webui:
+    image: ghcr.io/serene4mr/mowbot-config-webui:latest
+    container_name: mowbot_config_webui
+    ports:
+      - "8501:8501"
+    environment:
+      - MOWBOT_CONFIG_DIR=/etc/mowbot_data
+    volumes:
+      - ${MOWBOT_CONFIG_DIR:-/etc/mowbot_data}:/etc/mowbot_data
+    restart: always

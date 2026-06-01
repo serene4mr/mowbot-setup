@@ -16,7 +16,7 @@ compose() {
     HOME="$COMPOSE_HOME" docker compose --env-file mowbot.env -f docker-compose.yml "$@"
 }
 
-# 1. Stop and disable systemd service
+# 1. Stop and disable systemd services
 if sudo systemctl is-active --quiet mowbot_gui.service; then
     echo "Stopping mowbot_gui.service..."
     sudo systemctl stop mowbot_gui.service
@@ -27,7 +27,18 @@ if sudo systemctl is-enabled --quiet mowbot_gui.service; then
     sudo systemctl disable mowbot_gui.service
 fi
 
+if sudo systemctl is-active --quiet mowbot_config_webui.service; then
+    echo "Stopping mowbot_config_webui.service..."
+    sudo systemctl stop mowbot_config_webui.service
+fi
+
+if sudo systemctl is-enabled --quiet mowbot_config_webui.service; then
+    echo "Disabling mowbot_config_webui.service..."
+    sudo systemctl disable mowbot_config_webui.service
+fi
+
 sudo rm -f /etc/systemd/system/mowbot_gui.service
+sudo rm -f /etc/systemd/system/mowbot_config_webui.service
 sudo systemctl daemon-reload
 
 # Runtime env written by mowbot_gui.service ExecStartPre

@@ -94,7 +94,7 @@ compose pull
 echo "Recreating stack containers without starting (same as install; start manually when ready)..."
 compose up --force-recreate --no-start "${STACK_SERVICES[@]}"
 
-echo "Restarting GUI service to apply updates..."
-sudo systemctl restart mowbot_gui.service
+echo "Restarting GUI and WebUI services to apply updates..."
+sudo systemctl restart mowbot_gui.service mowbot_config_webui.service
 
 echo "Update complete!"

@@ -22,7 +22,7 @@ If `GHCR_USERNAME`/`GHCR_PAT` are not provided, the installer prompts for them.
 6. Pulls images with `docker compose --env-file mowbot.env pull`.
 7. Installs the systemd services:
    - `/etc/systemd/system/mowbot_gui.service` (manages Mowbot GUI)
-   - `/etc/systemd/system/mowbot_config_webui.service` (manages Streamlit Config Control Panel on port `8501`)
+   - `/etc/systemd/system/mowbot_utility_webui.service` (manages Streamlit Utility Control Panel on port `8501`)
    Both services set:
    - `User`/`Group` to the installing user
    - `WorkingDirectory` to this clone path
@@ -31,8 +31,8 @@ If `GHCR_USERNAME`/`GHCR_PAT` are not provided, the installer prompts for them.
 ### Verify
 
 ```bash
-sudo systemctl status mowbot_gui.service mowbot_config_webui.service
-journalctl -u mowbot_config_webui.service -f
+sudo systemctl status mowbot_gui.service mowbot_utility_webui.service
+journalctl -u mowbot_utility_webui.service -f
 docker compose --env-file mowbot.env ps
 ```
 
@@ -93,14 +93,14 @@ ls -l /dev/MB-*
 2. Optionally re-runs the `mowbot.env` prompts from install (robot ID/model, MQTT settings); press Enter to keep each current value.
 3. Pulls latest images with `docker compose --env-file mowbot.env pull`.
 4. Recreates the ROS stack containers (`mowbot_uros_agent`, bringup, localization, navigation, app) with `up --force-recreate --no-start` (new images, left stopped).
-5. Restarts `mowbot_gui.service` and `mowbot_config_webui.service` with `sudo systemctl restart`.
+5. Restarts `mowbot_gui.service` and `mowbot_utility_webui.service` with `sudo systemctl restart`.
 
 ### Verify
 
 ```bash
-sudo systemctl status mowbot_gui.service mowbot_config_webui.service
+sudo systemctl status mowbot_gui.service mowbot_utility_webui.service
 docker compose --env-file mowbot.env ps
-journalctl -u mowbot_config_webui.service -n 50 --no-pager
+journalctl -u mowbot_utility_webui.service -n 50 --no-pager
 ```
 
 ### Notes
@@ -118,8 +118,8 @@ journalctl -u mowbot_config_webui.service -n 50 --no-pager
 
 ### What It Does
 
-1. Stops and disables `mowbot_gui.service` and `mowbot_config_webui.service` if present.
-2. Removes `/etc/systemd/system/mowbot_gui.service` and `/etc/systemd/system/mowbot_config_webui.service`, reloads systemd, and deletes `/tmp/mowbot-xauth.env`.
+1. Stops and disables `mowbot_gui.service` and `mowbot_utility_webui.service` if present.
+2. Removes `/etc/systemd/system/mowbot_gui.service` and `/etc/systemd/system/mowbot_utility_webui.service`, reloads systemd, and deletes `/tmp/mowbot-xauth.env`.
 3. Brings down containers with `docker compose --env-file mowbot.env down`.
 4. Optionally removes `mowbot.env` / `.env` (prompted; created by `install.sh`).
 5. Optionally removes Mosquitto packages and config, including `hivemq-bridge.conf` if present (prompted).
@@ -127,7 +127,7 @@ journalctl -u mowbot_config_webui.service -n 50 --no-pager
 ### Verify
 
 ```bash
-sudo systemctl status mowbot_gui.service mowbot_config_webui.service || true
+sudo systemctl status mowbot_gui.service mowbot_utility_webui.service || true
 docker compose --env-file mowbot.env ps
 ```
 

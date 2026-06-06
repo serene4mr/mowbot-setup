@@ -1,5 +1,5 @@
 [Unit]
-Description=MowBot Config WebUI Service
+Description=MowBot Utility WebUI Service
 After=docker.service network-online.target
 Requires=docker.service
 Wants=network-online.target
@@ -12,8 +12,8 @@ Group=
 SupplementaryGroups=docker
 WorkingDirectory=%h/mowbot-setup
 Environment=HOME=%h
-ExecStart=/usr/libexec/docker/cli-plugins/docker-compose --env-file mowbot.env -f docker-compose.yml up mowbot_config_webui
-ExecStop=/usr/libexec/docker/cli-plugins/docker-compose --env-file mowbot.env -f docker-compose.yml stop -t 30 mowbot_config_webui
+ExecStart=/usr/libexec/docker/cli-plugins/docker-compose --env-file mowbot.env -f docker-compose.yml up mowbot_utility_webui
+ExecStop=/usr/libexec/docker/cli-plugins/docker-compose --env-file mowbot.env -f docker-compose.yml stop -t 30 mowbot_utility_webui
 Restart=on-failure
 RestartSec=10
 

@@ -163,9 +163,9 @@ services:
           launch_robot:=false launch_sensing:=false launch_sensing_driver:=false \
           launch_localization:=false launch_nav2:=false launch_app:=true
 
-  mowbot_config_webui:
-    image: ghcr.io/serene4mr/mowbot-config-webui:latest
-    container_name: mowbot_config_webui
+  mowbot_utility_webui:
+    image: ghcr.io/serene4mr/mowbot-utility-webui:latest
+    container_name: mowbot_utility_webui
     ports:
       - "8501:8501"
     environment:

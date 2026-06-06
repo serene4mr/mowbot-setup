@@ -95,6 +95,6 @@ echo "Recreating stack containers without starting (same as install; start manua
 compose up --force-recreate --no-start "${STACK_SERVICES[@]}"
 
 echo "Restarting GUI and WebUI services to apply updates..."
-sudo systemctl restart mowbot_gui.service mowbot_config_webui.service
+sudo systemctl restart mowbot_gui.service mowbot_utility_webui.service
 
 echo "Update complete!"

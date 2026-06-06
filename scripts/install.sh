@@ -226,7 +226,7 @@ HOME="$SVC_HOME" docker compose --env-file mowbot.env -f docker-compose.yml crea
 # 6. Setup systemd services
 SERVICE_NAME="mowbot_gui.service"
 SERVICE_FILE="/etc/systemd/system/$SERVICE_NAME"
-WEBUI_SERVICE_NAME="mowbot_config_webui.service"
+WEBUI_SERVICE_NAME="mowbot_utility_webui.service"
 WEBUI_SERVICE_FILE="/etc/systemd/system/$WEBUI_SERVICE_NAME"
 
 echo "Configuring systemd services..."
@@ -240,7 +240,7 @@ sed -e "s|^User=.*|User=$SVC_USER|" \
 sed -e "s|^User=.*|User=$SVC_USER|" \
     -e "s|^Group=.*|Group=$SVC_GROUP|" \
     -e "s|WorkingDirectory=.*|WorkingDirectory=$DIR_ESC|" \
-    "$DIR/mowbot_config_webui.service.example" | sudo tee "$WEBUI_SERVICE_FILE" > /dev/null
+    "$DIR/mowbot_utility_webui.service.example" | sudo tee "$WEBUI_SERVICE_FILE" > /dev/null
 
 # 7. Enable and start services
 echo "Enabling and starting Mowbot services..."

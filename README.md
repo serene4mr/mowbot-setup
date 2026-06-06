@@ -135,4 +135,4 @@ docker compose --env-file mowbot.env ps
 
 - `mowbot.env` removal is optional (default: keep) so you can reinstall without re-entering robot/MQTT settings.
 - Mosquitto removal is optional and only runs if you confirm the prompt.
-- Install also creates `/etc/mowbot_data` and udev rules; uninstall does not remove those (use backups or manual cleanup if needed).
+- Install also creates `/etc/mowbot_data` and udev rules; uninstall does not remove those. When running the installer again, it will prompt you to choose whether to reset the data directory to default (discarding local changes) or keep/update it.

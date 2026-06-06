@@ -200,18 +200,42 @@ fi
 DATA_HOST_DIR="/etc/mowbot_data"
 DATA_REPO_URL="https://github.com/serene4mr/mowbot_data"
 echo "Ensuring host data directory exists at $DATA_HOST_DIR ..."
-if [ ! -d "$DATA_HOST_DIR/.git" ]; then
-    if [ -d "$DATA_HOST_DIR" ] && [ -n "$(ls -A "$DATA_HOST_DIR" 2>/dev/null)" ]; then
-        echo "Error: $DATA_HOST_DIR exists and is not an empty git repo."
-        echo "Please back it up or clear it, then re-run install."
-        exit 1
+if [ -d "$DATA_HOST_DIR" ]; then
+    if [ -z "${RESET_MOWBOT_DATA:-}" ]; then
+        if [ -t 0 ]; then
+            read -p "Found existing mowbot_data at $DATA_HOST_DIR. Reset to default (discard all local changes/files)? y/N (default: N): " INPUT_RESET_MOWBOT_DATA || INPUT_RESET_MOWBOT_DATA="n"
+        else
+            INPUT_RESET_MOWBOT_DATA="n"
+        fi
+    else
+        INPUT_RESET_MOWBOT_DATA="$RESET_MOWBOT_DATA"
     fi
-    sudo rm -rf "$DATA_HOST_DIR"
+    case "${INPUT_RESET_MOWBOT_DATA,,}" in
+        y|yes|true|1)
+            echo "Resetting mowbot_data by removing existing directory and cloning fresh..."
+            sudo rm -rf "$DATA_HOST_DIR"
+            echo "Cloning mowbot_data to $DATA_HOST_DIR ..."
+            sudo git clone "$DATA_REPO_URL" "$DATA_HOST_DIR"
+            ;;
+        *)
+            if [ -d "$DATA_HOST_DIR/.git" ]; then
+                echo "Updating mowbot_data at $DATA_HOST_DIR ..."
+                set +e
+                sudo git -C "$DATA_HOST_DIR" pull --ff-only
+                GIT_PULL_STATUS=$?
+                set -e
+                if [ $GIT_PULL_STATUS -ne 0 ]; then
+                    echo "Warning: git pull failed (possibly due to local modifications)."
+                    echo "Keeping current local mowbot_data files."
+                fi
+            else
+                echo "Keeping existing non-git directory at $DATA_HOST_DIR."
+            fi
+            ;;
+    esac
+else
     echo "Cloning mowbot_data to $DATA_HOST_DIR ..."
     sudo git clone "$DATA_REPO_URL" "$DATA_HOST_DIR"
-else
-    echo "Updating mowbot_data at $DATA_HOST_DIR ..."
-    sudo git -C "$DATA_HOST_DIR" pull --ff-only
 fi
 sudo chown -R "$SVC_USER:$SVC_GROUP" "$DATA_HOST_DIR"
 

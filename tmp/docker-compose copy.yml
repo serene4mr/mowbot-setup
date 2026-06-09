@@ -21,7 +21,7 @@ services:
     command: [ "python3", "/mowbot-gui/src/main.py" ]
 
   mowbot_uros_agent:
-    image: ghcr.io/serene4mr/micro-ros-agent:humble
+    image: microros/micro-ros-agent:humble
     container_name: mowbot_uros_agent
     network_mode: host
     stdin_open: true
@@ -157,11 +157,11 @@ services:
           launch_localization:=false launch_nav2:=false launch_app:=true
 
   mapproxy:
-    image: ghcr.io/serene4mr/danielsnider-mapproxy:latest
+    image: kartoza/mapproxy
     container_name: mapproxy
     ports:
       - "8080:8080"
     tty: true
     volumes:
-      - ~/mapproxy:/mapproxy
+      - ./mapproxy:/mapproxy
     restart: always

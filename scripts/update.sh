@@ -86,6 +86,7 @@ STACK_SERVICES=(
     mowbot_localization
     mowbot_navigation
     mowbot_app
+    mapproxy
 )
 
 echo "Pulling latest Docker images from ghcr.io..."

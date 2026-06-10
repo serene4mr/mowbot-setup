@@ -166,10 +166,10 @@ elif [ -f ".env" ]; then
 else
     echo "--- Hardware provisioning ($ENV_FILE) ---"
     echo "Copy mowbot.env.example to $ENV_FILE and edit, or answer the prompts below."
+    read -p "Enter Manufacturer (default: MowbotTech): " INPUT_MB_MANUFACTURER
     read -p "Enter Robot ID (default: mowbot_001): " INPUT_MB_ROBOT_ID
     read -p "Enter Robot Model (default: mowbot_model_t2): " INPUT_MB_ROBOT_MODEL
     read -p "Enter Sensor Model (default: mowbot_sensor_kit_t2): " INPUT_MB_SENSOR_MODEL
-    read -p "Enter Manufacturer (default: MowbotTech): " INPUT_MB_MANUFACTURER
     read -p "Enter MQTT broker host (default: localhost): " INPUT_MB_MQTT_HOST
     read -p "Enter MQTT broker port (default: 1883): " INPUT_MB_MQTT_PORT
     read -p "Use MQTT TLS? y/N (default: N): " INPUT_MB_MQTT_USE_TLS

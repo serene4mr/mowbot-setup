@@ -168,8 +168,21 @@ else
     echo "Copy mowbot.env.example to $ENV_FILE and edit, or answer the prompts below."
     read -p "Enter Manufacturer (default: MowbotTech): " INPUT_MB_MANUFACTURER
     read -p "Enter Robot ID (default: mowbot_001): " INPUT_MB_ROBOT_ID
-    read -p "Enter Robot Model (default: mowbot_model_t2): " INPUT_MB_ROBOT_MODEL
-    read -p "Enter Sensor Model (default: mowbot_sensor_kit_t2): " INPUT_MB_SENSOR_MODEL
+    read -p "Enter Model (t1/t2/t3, default: t2): " INPUT_MB_MODEL
+    case "${INPUT_MB_MODEL,,}" in
+        t1)
+            MB_ROBOT_MODEL_VALUE="mowbot_model_t1"
+            MB_SENSOR_MODEL_VALUE="mowbot_sensor_kit_t1"
+            ;;
+        t3)
+            MB_ROBOT_MODEL_VALUE="mowbot_model_t3"
+            MB_SENSOR_MODEL_VALUE="mowbot_sensor_kit_t3"
+            ;;
+        *)
+            MB_ROBOT_MODEL_VALUE="mowbot_model_t2"
+            MB_SENSOR_MODEL_VALUE="mowbot_sensor_kit_t2"
+            ;;
+    esac
     read -p "Enter MQTT broker host (default: localhost): " INPUT_MB_MQTT_HOST
     read -p "Enter MQTT broker port (default: 1883): " INPUT_MB_MQTT_PORT
     read -p "Use MQTT TLS? y/N (default: N): " INPUT_MB_MQTT_USE_TLS
@@ -181,8 +194,8 @@ else
     {
         echo "MB_ROBOT_ID=${INPUT_MB_ROBOT_ID:-mowbot_001}"
         echo "MB_MANUFACTURER=${INPUT_MB_MANUFACTURER:-MowbotTech}"
-        echo "MB_ROBOT_MODEL=${INPUT_MB_ROBOT_MODEL:-mowbot_model_t2}"
-        echo "MB_SENSOR_MODEL=${INPUT_MB_SENSOR_MODEL:-mowbot_sensor_kit_t2}"
+        echo "MB_ROBOT_MODEL=${MB_ROBOT_MODEL_VALUE}"
+        echo "MB_SENSOR_MODEL=${MB_SENSOR_MODEL_VALUE}"
         echo ""
         echo "MB_MQTT_HOST=${INPUT_MB_MQTT_HOST:-localhost}"
         echo "MB_MQTT_PORT=${INPUT_MB_MQTT_PORT:-1883}"

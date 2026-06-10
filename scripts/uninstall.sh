@@ -13,7 +13,7 @@ else
 fi
 COMPOSE_HOME="$(getent passwd "$COMPOSE_USER" | cut -d: -f6)"
 compose() {
-    HOME="$COMPOSE_HOME" docker compose --env-file mowbot.env -f docker-compose.yml "$@"
+    HOME="$COMPOSE_HOME" docker compose --env-file /etc/mowbot.env -f docker-compose.yml "$@"
 }
 
 # 1. Stop and disable systemd services
@@ -44,19 +44,20 @@ sudo systemctl daemon-reload
 # Runtime env written by mowbot_gui.service ExecStartPre
 sudo rm -f /tmp/mowbot-xauth.env
 
-# 2. Stop Docker containers (needs mowbot.env while compose runs)
+# 2. Stop Docker containers (needs /etc/mowbot.env while compose runs)
 echo "Stopping Docker containers..."
-if [ -f mowbot.env ]; then
+if [ -f /etc/mowbot.env ]; then
     compose down || true
 else
-    echo "No mowbot.env found; skipping compose down."
+    echo "No /etc/mowbot.env found; skipping compose down."
 fi
 
 # 3. Optional: remove machine config created by install.sh
-read -p "Remove mowbot.env (robot/MQTT settings from install)? (y/N): " REMOVE_ENV
+read -p "Remove /etc/mowbot.env (robot/MQTT settings from install)? (y/N): " REMOVE_ENV
 if [[ "$REMOVE_ENV" =~ ^[Yy]$ ]]; then
+    sudo rm -f /etc/mowbot.env
     rm -f mowbot.env .env
-    echo "Removed mowbot.env and .env (if present)."
+    echo "Removed /etc/mowbot.env, mowbot.env and .env (if present)."
 fi
 
 # 4. Optional: Uninstall Mosquitto

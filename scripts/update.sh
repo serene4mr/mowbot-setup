@@ -6,7 +6,15 @@ echo "Updating Mowbot Stack..."
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." &> /dev/null && pwd)"
 cd "$DIR"
 
-ENV_FILE="mowbot.env"
+if [ -n "${SUDO_USER:-}" ] && id -u "$SUDO_USER" >/dev/null 2>&1; then
+    COMPOSE_USER="$SUDO_USER"
+else
+    COMPOSE_USER="$(id -un)"
+fi
+COMPOSE_GROUP="$(id -gn "$COMPOSE_USER")"
+COMPOSE_HOME="$(getent passwd "$COMPOSE_USER" | cut -d: -f6)"
+
+ENV_FILE="/etc/mowbot.env"
 if [ ! -f "$ENV_FILE" ]; then
     echo "Error: $ENV_FILE not found. Run scripts/install.sh first."
     exit 1
@@ -50,6 +58,7 @@ if [[ "$UPDATE_ENV" =~ ^[Yy]$ ]]; then
             *) MB_MQTT_USE_TLS=false ;;
         esac
     fi
+    TMP_ENV="$(mktemp)"
     {
         echo "MB_ROBOT_ID=$MB_ROBOT_ID"
         echo "MB_MANUFACTURER=$MB_MANUFACTURER"
@@ -63,21 +72,16 @@ if [[ "$UPDATE_ENV" =~ ^[Yy]$ ]]; then
         echo "MB_MQTT_PASSWORD=$MB_MQTT_PASSWORD"
         echo ""
         echo "MB_DATA_PATH=$MB_DATA_PATH"
-    } > "$ENV_FILE"
-    chmod 600 "$ENV_FILE" 2>/dev/null || true
+    } > "$TMP_ENV"
+    sudo install -m 600 -o "$COMPOSE_USER" -g "$COMPOSE_GROUP" "$TMP_ENV" "$ENV_FILE"
+    rm -f "$TMP_ENV"
     echo "Saved to $ENV_FILE"
     echo ""
 fi
 
 # Docker should already be logged in from install.sh
-if [ -n "${SUDO_USER:-}" ] && id -u "$SUDO_USER" >/dev/null 2>&1; then
-    COMPOSE_USER="$SUDO_USER"
-else
-    COMPOSE_USER="$(id -un)"
-fi
-COMPOSE_HOME="$(getent passwd "$COMPOSE_USER" | cut -d: -f6)"
 compose() {
-    HOME="$COMPOSE_HOME" docker compose --env-file mowbot.env -f docker-compose.yml "$@"
+    HOME="$COMPOSE_HOME" docker compose --env-file /etc/mowbot.env -f docker-compose.yml "$@"
 }
 
 STACK_SERVICES=(

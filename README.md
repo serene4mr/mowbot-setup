@@ -17,9 +17,9 @@ If `GHCR_USERNAME`/`GHCR_PAT` are not provided, the installer prompts for them.
 1. Verifies Docker is installed and accessible.
 2. Installs and configures Mosquitto (`1883`, anonymous access enabled).
 3. Optionally configures a HiveMQ bridge in `/etc/mosquitto/conf.d/hivemq-bridge.conf`.
-4. Creates `mowbot.env` (or reuses/migrates existing env files).
+4. Creates `/etc/mowbot.env` (or reuses/migrates existing env files).
 5. Logs in to `ghcr.io` with the provided credentials.
-6. Pulls images with `docker compose --env-file mowbot.env pull`.
+6. Pulls images with `docker compose --env-file /etc/mowbot.env pull`.
 7. Installs the systemd services:
    - `/etc/systemd/system/mowbot_gui.service` (manages Mowbot GUI)
    - `/etc/systemd/system/mowbot_utility_webui.service` (manages Streamlit Utility Control Panel on port `8501`)
@@ -33,12 +33,12 @@ If `GHCR_USERNAME`/`GHCR_PAT` are not provided, the installer prompts for them.
 ```bash
 sudo systemctl status mowbot_gui.service mowbot_utility_webui.service
 journalctl -u mowbot_utility_webui.service -f
-docker compose --env-file mowbot.env ps
+docker compose --env-file /etc/mowbot.env ps
 ```
 
 ### Notes
 
-- New `mowbot.env` defaults: `MB_ROBOT_ID=mowbot_001`, `MB_MANUFACTURER=MowbotTech`, `MB_ROBOT_MODEL=mowbot_model_t2`, `MB_SENSOR_MODEL=mowbot_sensor_kit_t2`, `MB_MQTT_HOST=localhost`, `MB_MQTT_PORT=1883`, `MB_MQTT_USE_TLS=false`.
+- New `/etc/mowbot.env` defaults: `MB_ROBOT_ID=mowbot_001`, `MB_MANUFACTURER=MowbotTech`, `MB_ROBOT_MODEL=mowbot_model_t2`, `MB_SENSOR_MODEL=mowbot_sensor_kit_t2`, `MB_MQTT_HOST=localhost`, `MB_MQTT_PORT=1883`, `MB_MQTT_USE_TLS=false`.
 - `MB_MQTT_USE_TLS` is set to `true` only if TLS prompt is answered with `y`, `yes`, `true`, or `1`.
 - `MB_DATA_PATH` is left blank for manual configuration.
 - Installer can optionally configure HiveMQ bridge forwarding. No defaults are applied for HiveMQ values; provide `HIVEMQ_BRIDGE_ADDRESS`, `HIVEMQ_USERNAME`, and `HIVEMQ_PASSWORD` (or enter them interactively) when bridge setup is enabled.
@@ -90,8 +90,8 @@ ls -l /dev/MB-*
 ### What It Does
 
 1. Switches to the repository root.
-2. Optionally re-runs the `mowbot.env` prompts from install (robot ID/model, MQTT settings); press Enter to keep each current value.
-3. Pulls latest images with `docker compose --env-file mowbot.env pull`.
+2. Optionally re-runs the `/etc/mowbot.env` prompts from install (robot ID/model, MQTT settings); press Enter to keep each current value.
+3. Pulls latest images with `docker compose --env-file /etc/mowbot.env pull`.
 4. Recreates the ROS stack containers (`mowbot_uros_agent`, bringup, localization, navigation, app) with `up --force-recreate --no-start` (new images, left stopped).
 5. Restarts `mowbot_gui.service` and `mowbot_utility_webui.service` with `sudo systemctl restart`.
 
@@ -99,7 +99,7 @@ ls -l /dev/MB-*
 
 ```bash
 sudo systemctl status mowbot_gui.service mowbot_utility_webui.service
-docker compose --env-file mowbot.env ps
+docker compose --env-file /etc/mowbot.env ps
 journalctl -u mowbot_utility_webui.service -n 50 --no-pager
 ```
 
@@ -120,19 +120,19 @@ journalctl -u mowbot_utility_webui.service -n 50 --no-pager
 
 1. Stops and disables `mowbot_gui.service` and `mowbot_utility_webui.service` if present.
 2. Removes `/etc/systemd/system/mowbot_gui.service` and `/etc/systemd/system/mowbot_utility_webui.service`, reloads systemd, and deletes `/tmp/mowbot-xauth.env`.
-3. Brings down containers with `docker compose --env-file mowbot.env down`.
-4. Optionally removes `mowbot.env` / `.env` (prompted; created by `install.sh`).
+3. Brings down containers with `docker compose --env-file /etc/mowbot.env down`.
+4. Optionally removes `/etc/mowbot.env` (prompted; created by `install.sh`).
 5. Optionally removes Mosquitto packages and config, including `hivemq-bridge.conf` if present (prompted).
 
 ### Verify
 
 ```bash
 sudo systemctl status mowbot_gui.service mowbot_utility_webui.service || true
-docker compose --env-file mowbot.env ps
+docker compose --env-file /etc/mowbot.env ps
 ```
 
 ### Notes
 
-- `mowbot.env` removal is optional (default: keep) so you can reinstall without re-entering robot/MQTT settings.
+- `/etc/mowbot.env` removal is optional (default: keep) so you can reinstall without re-entering robot/MQTT settings.
 - Mosquitto removal is optional and only runs if you confirm the prompt.
 - Install also creates `/etc/mowbot_data` and udev rules; uninstall does not remove those. When running the installer again, it will prompt you to choose whether to reset the data directory to default (discarding local changes) or keep/update it.

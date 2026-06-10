@@ -11,6 +11,7 @@ services:
       - DISPLAY=${DISPLAY:-:0}
       - QTWEBENGINE_DISABLE_SANDBOX=1
       - MBGUI_CONFIG=/etc/mowbot_data/gui/config.yaml
+      - MBGUI_MANUFACTURER=${MB_MANUFACTURER:-MowbotTech}
       - MBGUI_SERIAL_NUMBER=${MB_ROBOT_ID:-mowbot_001}
       - MBGUI_MQTT_HOST=${MB_MQTT_HOST:-localhost}
       - MBGUI_MQTT_PORT=${MB_MQTT_PORT:-1883}

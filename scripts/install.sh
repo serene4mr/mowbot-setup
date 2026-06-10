@@ -137,13 +137,30 @@ esac
 sudo systemctl enable mosquitto
 sudo systemctl restart mosquitto
 
-# 3. Machine config: mowbot.env (same file as mowbot_gui.service --env-file and mowbot.env.example)
-ENV_FILE="mowbot.env"
+# Resolve the target service user once; used for config permissions, compose, systemd, and home path.
+# When run via sudo we want the real user, not root.
+if [ -n "${SUDO_USER:-}" ] && id -u "$SUDO_USER" >/dev/null 2>&1; then
+    SVC_USER="$SUDO_USER"
+else
+    SVC_USER="$(id -un)"
+fi
+SVC_GROUP="$(id -gn "$SVC_USER")"
+SVC_UID="$(id -u "$SVC_USER")"
+# Use getent for the authoritative home directory (handles non-standard homes).
+SVC_HOME="$(getent passwd "$SVC_USER" | cut -d: -f6)"
+
+# 3. Machine config: /etc/mowbot.env (same file as systemd service and mowbot.env.example)
+ENV_FILE="/etc/mowbot.env"
 if [ -f "$ENV_FILE" ]; then
     echo "Found existing $ENV_FILE, skipping hardware provisioning."
+elif [ -f "mowbot.env" ]; then
+    echo "Migrating local mowbot.env -> $ENV_FILE (systemd uses $ENV_FILE)."
+    sudo install -m 600 -o "$SVC_USER" -g "$SVC_GROUP" mowbot.env "$ENV_FILE"
+    echo "You may delete local mowbot.env if everything looks correct."
+    echo ""
 elif [ -f ".env" ]; then
     echo "Migrating .env -> $ENV_FILE (systemd uses $ENV_FILE)."
-    cp .env "$ENV_FILE"
+    sudo install -m 600 -o "$SVC_USER" -g "$SVC_GROUP" .env "$ENV_FILE"
     echo "You may delete .env if everything looks correct."
     echo ""
 else
@@ -160,6 +177,7 @@ else
         y|yes|true|1) MB_MQTT_USE_TLS_VALUE=true ;;
         *) MB_MQTT_USE_TLS_VALUE=false ;;
     esac
+    TMP_ENV="$(mktemp)"
     {
         echo "MB_ROBOT_ID=${INPUT_MB_ROBOT_ID:-mowbot_001}"
         echo "MB_MANUFACTURER=${INPUT_MB_MANUFACTURER:-MowbotTech}"
@@ -171,8 +189,9 @@ else
         echo "MB_MQTT_USE_TLS=$MB_MQTT_USE_TLS_VALUE"
         echo ""
         echo "MB_DATA_PATH="
-    } > "$ENV_FILE"
-    chmod 600 "$ENV_FILE" 2>/dev/null || true
+    } > "$TMP_ENV"
+    sudo install -m 600 -o "$SVC_USER" -g "$SVC_GROUP" "$TMP_ENV" "$ENV_FILE"
+    rm -f "$TMP_ENV"
     echo "Saved to $ENV_FILE"
     echo ""
 fi
@@ -181,17 +200,6 @@ fi
 echo "Logging into ghcr.io..."
 echo "$GHCR_PAT" | docker login ghcr.io -u "$GHCR_USERNAME" --password-stdin
 
-# Resolve the target service user once; used for compose, systemd, and home path.
-# When run via sudo we want the real user, not root.
-if [ -n "${SUDO_USER:-}" ] && id -u "$SUDO_USER" >/dev/null 2>&1; then
-    SVC_USER="$SUDO_USER"
-else
-    SVC_USER="$(id -un)"
-fi
-SVC_GROUP="$(id -gn "$SVC_USER")"
-SVC_UID="$(id -u "$SVC_USER")"
-# Use getent for the authoritative home directory (handles non-standard homes).
-SVC_HOME="$(getent passwd "$SVC_USER" | cut -d: -f6)"
 if [ "$SVC_USER" = "root" ]; then
     echo "Warning: systemd User=root. Prefer running install as a normal user (use sudo only for apt/systemctl steps), or edit $SERVICE_FILE."
 fi
@@ -239,13 +247,13 @@ else
 fi
 sudo chown -R "$SVC_USER:$SVC_GROUP" "$DATA_HOST_DIR"
 
-# 5. Pull latest images (same env file as systemd / manual: docker compose --env-file mowbot.env)
+# 5. Pull latest images (same env file as systemd / manual: docker compose --env-file /etc/mowbot.env)
 echo "Pulling latest Docker images..."
-HOME="$SVC_HOME" docker compose --env-file mowbot.env pull
+HOME="$SVC_HOME" docker compose --env-file /etc/mowbot.env pull
 
 # 5b. Create containers ahead of service start
 echo "Creating Docker containers..."
-HOME="$SVC_HOME" docker compose --env-file mowbot.env -f docker-compose.yml create
+HOME="$SVC_HOME" docker compose --env-file /etc/mowbot.env -f docker-compose.yml create
 
 # 6. Setup systemd services
 SERVICE_NAME="mowbot_gui.service"

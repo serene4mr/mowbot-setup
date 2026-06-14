@@ -43,8 +43,12 @@ echo "Stopping Docker containers..."
 if [ -f /etc/mowbot.env ]; then
     read -p "Do you want to remove all Docker images used by Mowbot? (y/N): " REMOVE_IMAGES
     if [[ "$REMOVE_IMAGES" =~ ^[Yy]$ ]]; then
-        echo "Stopping containers and removing images..."
-        compose down --rmi all || true
+        echo "Stopping containers and force removing images..."
+        IMAGES=$(compose config --images 2>/dev/null | sort -u || true)
+        compose down || true
+        if [ -n "$IMAGES" ]; then
+            docker rmi -f $IMAGES || true
+        fi
     else
         compose down || true
     fi

@@ -16,49 +16,38 @@ compose() {
     HOME="$COMPOSE_HOME" docker compose --env-file /etc/mowbot.env -f docker-compose.yml "$@"
 }
 
-# 1. Stop and disable systemd services
-if sudo systemctl is-active --quiet mowbot_gui.service; then
-    echo "Stopping mowbot_gui.service..."
-    sudo systemctl stop mowbot_gui.service
-fi
+# 1. Stop, disable and remove all systemd services starting with mowbot_
+SERVICES=$(find /etc/systemd/system/ -name "mowbot_*.service" -printf "%f\n" 2>/dev/null || true)
 
-if sudo systemctl is-enabled --quiet mowbot_gui.service; then
-    echo "Disabling mowbot_gui.service..."
-    sudo systemctl disable mowbot_gui.service
+if [ -n "$SERVICES" ]; then
+    for svc in $SERVICES; do
+        if sudo systemctl is-active --quiet "$svc"; then
+            echo "Stopping $svc..."
+            sudo systemctl stop "$svc"
+        fi
+        if sudo systemctl is-enabled --quiet "$svc"; then
+            echo "Disabling $svc..."
+            sudo systemctl disable "$svc"
+        fi
+        echo "Removing service file for $svc..."
+        sudo rm -f "/etc/systemd/system/$svc"
+    done
+    sudo systemctl daemon-reload
 fi
-
-if sudo systemctl is-active --quiet mowbot_utility_webui.service; then
-    echo "Stopping mowbot_utility_webui.service..."
-    sudo systemctl stop mowbot_utility_webui.service
-fi
-
-if sudo systemctl is-enabled --quiet mowbot_utility_webui.service; then
-    echo "Disabling mowbot_utility_webui.service..."
-    sudo systemctl disable mowbot_utility_webui.service
-fi
-
-if sudo systemctl is-active --quiet mowbot_mapproxy.service; then
-    echo "Stopping mowbot_mapproxy.service..."
-    sudo systemctl stop mowbot_mapproxy.service
-fi
-
-if sudo systemctl is-enabled --quiet mowbot_mapproxy.service; then
-    echo "Disabling mowbot_mapproxy.service..."
-    sudo systemctl disable mowbot_mapproxy.service
-fi
-
-sudo rm -f /etc/systemd/system/mowbot_gui.service
-sudo rm -f /etc/systemd/system/mowbot_utility_webui.service
-sudo rm -f /etc/systemd/system/mowbot_mapproxy.service
-sudo systemctl daemon-reload
 
 # Runtime env written by mowbot_gui.service ExecStartPre
 sudo rm -f /tmp/mowbot-xauth.env
 
-# 2. Stop Docker containers (needs /etc/mowbot.env while compose runs)
+# 2. Stop Docker containers and optionally remove images (needs /etc/mowbot.env while compose runs)
 echo "Stopping Docker containers..."
 if [ -f /etc/mowbot.env ]; then
-    compose down || true
+    read -p "Do you want to remove all Docker images used by Mowbot? (y/N): " REMOVE_IMAGES
+    if [[ "$REMOVE_IMAGES" =~ ^[Yy]$ ]]; then
+        echo "Stopping containers and removing images..."
+        compose down --rmi all || true
+    else
+        compose down || true
+    fi
 else
     echo "No /etc/mowbot.env found; skipping compose down."
 fi

@@ -38,22 +38,29 @@ fi
 # Runtime env written by mowbot_gui.service ExecStartPre
 sudo rm -f /tmp/mowbot-xauth.env
 
-# 2. Stop Docker containers and optionally remove images (needs /etc/mowbot.env while compose runs)
-echo "Stopping Docker containers..."
+# 2. Stop and remove Docker containers
+echo "Stopping and removing Mowbot Docker containers..."
 if [ -f /etc/mowbot.env ]; then
-    read -p "Do you want to remove all Docker images used by Mowbot? (y/N): " REMOVE_IMAGES
-    if [[ "$REMOVE_IMAGES" =~ ^[Yy]$ ]]; then
-        echo "Stopping containers and force removing images..."
-        IMAGES=$(compose config --images 2>/dev/null | sort -u || true)
-        compose down || true
-        if [ -n "$IMAGES" ]; then
-            docker rmi -f $IMAGES || true
-        fi
-    else
-        compose down || true
-    fi
+    compose down || true
 else
-    echo "No /etc/mowbot.env found; skipping compose down."
+    echo "No /etc/mowbot.env found; skipping compose down. Will clean up containers by name filter."
+fi
+
+# Force stop and remove any remaining containers starting with mowbot_
+REMAINING_CONTAINERS=$(docker ps -a --filter "name=^/mowbot_" -q)
+if [ -n "$REMAINING_CONTAINERS" ]; then
+    echo "Force removing remaining Mowbot containers..."
+    docker rm -f $REMAINING_CONTAINERS || true
+fi
+
+# Optionally remove images
+read -p "Do you want to remove all Docker images used by Mowbot? (y/N): " REMOVE_IMAGES
+if [[ "$REMOVE_IMAGES" =~ ^[Yy]$ ]]; then
+    echo "Force removing Docker images..."
+    IMAGES=$(docker images --format "{{.Repository}}:{{.Tag}}" | grep -E "mowbot|mapproxy|micro-ros-agent" || true)
+    if [ -n "$IMAGES" ]; then
+        docker rmi -f $IMAGES || true
+    fi
 fi
 
 # 3. Optional: remove machine config created by install.sh

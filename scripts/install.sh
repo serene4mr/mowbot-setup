@@ -273,6 +273,8 @@ SERVICE_NAME="mowbot_gui.service"
 SERVICE_FILE="/etc/systemd/system/$SERVICE_NAME"
 WEBUI_SERVICE_NAME="mowbot_utility_webui.service"
 WEBUI_SERVICE_FILE="/etc/systemd/system/$WEBUI_SERVICE_NAME"
+MAPPROXY_SERVICE_NAME="mowbot_mapproxy.service"
+MAPPROXY_SERVICE_FILE="/etc/systemd/system/$MAPPROXY_SERVICE_NAME"
 
 echo "Configuring systemd services..."
 # Point WorkingDirectory at this clone; escape & for sed replacement.
@@ -280,19 +282,25 @@ DIR_ESC="${DIR//&/\\&}"
 sed -e "s|^User=.*|User=$SVC_USER|" \
     -e "s|^Group=.*|Group=$SVC_GROUP|" \
     -e "s|WorkingDirectory=.*|WorkingDirectory=$DIR_ESC|" \
-    "$DIR/mowbot_gui.service.example" | sudo tee "$SERVICE_FILE" > /dev/null
+    "$DIR/services/mowbot_gui.service.example" | sudo tee "$SERVICE_FILE" > /dev/null
 
 sed -e "s|^User=.*|User=$SVC_USER|" \
     -e "s|^Group=.*|Group=$SVC_GROUP|" \
     -e "s|WorkingDirectory=.*|WorkingDirectory=$DIR_ESC|" \
-    "$DIR/mowbot_utility_webui.service.example" | sudo tee "$WEBUI_SERVICE_FILE" > /dev/null
+    "$DIR/services/mowbot_utility_webui.service.example" | sudo tee "$WEBUI_SERVICE_FILE" > /dev/null
+
+sed -e "s|^User=.*|User=$SVC_USER|" \
+    -e "s|^Group=.*|Group=$SVC_GROUP|" \
+    -e "s|WorkingDirectory=.*|WorkingDirectory=$DIR_ESC|" \
+    "$DIR/services/mowbot_mapproxy.service.example" | sudo tee "$MAPPROXY_SERVICE_FILE" > /dev/null
 
 # 7. Enable and start services
 echo "Enabling and starting Mowbot services..."
 sudo systemctl daemon-reload
-sudo systemctl enable "$SERVICE_NAME" "$WEBUI_SERVICE_NAME"
-sudo systemctl restart "$SERVICE_NAME" "$WEBUI_SERVICE_NAME"
+sudo systemctl enable "$SERVICE_NAME" "$WEBUI_SERVICE_NAME" "$MAPPROXY_SERVICE_NAME"
+sudo systemctl restart "$SERVICE_NAME" "$WEBUI_SERVICE_NAME" "$MAPPROXY_SERVICE_NAME"
 
 echo "Mowbot installation complete! You can view live system status using:"
 echo "sudo systemctl status $SERVICE_NAME"
 echo "sudo systemctl status $WEBUI_SERVICE_NAME"
+echo "sudo systemctl status $MAPPROXY_SERVICE_NAME"

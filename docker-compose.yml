@@ -178,12 +178,12 @@ services:
       - ${MB_DATA_PATH:-/etc/mowbot_data}:/etc/mowbot_data
     restart: always
 
-  mapproxy:
+  mowbot_mapproxy:
     image: kartoza/mapproxy
-    container_name: mapproxy
+    container_name: mowbot_mapproxy
     ports:
       - "8080:8080"
     tty: true
     volumes:
-      - ./mapproxy:/mapproxy
+      - ${MB_DATA_PATH:-/etc/mowbot_data}/mapproxy:/mapproxy
     restart: always

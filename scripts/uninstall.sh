@@ -37,8 +37,19 @@ if sudo systemctl is-enabled --quiet mowbot_utility_webui.service; then
     sudo systemctl disable mowbot_utility_webui.service
 fi
 
+if sudo systemctl is-active --quiet mowbot_mapproxy.service; then
+    echo "Stopping mowbot_mapproxy.service..."
+    sudo systemctl stop mowbot_mapproxy.service
+fi
+
+if sudo systemctl is-enabled --quiet mowbot_mapproxy.service; then
+    echo "Disabling mowbot_mapproxy.service..."
+    sudo systemctl disable mowbot_mapproxy.service
+fi
+
 sudo rm -f /etc/systemd/system/mowbot_gui.service
 sudo rm -f /etc/systemd/system/mowbot_utility_webui.service
+sudo rm -f /etc/systemd/system/mowbot_mapproxy.service
 sudo systemctl daemon-reload
 
 # Runtime env written by mowbot_gui.service ExecStartPre

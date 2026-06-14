@@ -90,7 +90,6 @@ STACK_SERVICES=(
     mowbot_localization
     mowbot_navigation
     mowbot_app
-    mapproxy
 )
 
 echo "Pulling latest Docker images from ghcr.io..."
@@ -99,7 +98,7 @@ compose pull
 echo "Recreating stack containers without starting (same as install; start manually when ready)..."
 compose up --force-recreate --no-start "${STACK_SERVICES[@]}"
 
-echo "Restarting GUI and WebUI services to apply updates..."
-sudo systemctl restart mowbot_gui.service mowbot_utility_webui.service
+echo "Restarting GUI, WebUI, and MapProxy services to apply updates..."
+sudo systemctl restart mowbot_gui.service mowbot_utility_webui.service mowbot_mapproxy.service
 
 echo "Update complete!"

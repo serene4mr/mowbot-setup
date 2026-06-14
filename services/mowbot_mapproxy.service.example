@@ -1,0 +1,22 @@
+[Unit]
+Description=MowBot MapProxy Service
+After=docker.service network-online.target
+Requires=docker.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+# User/Group are overwritten by scripts/install.sh to match the installing account.
+User=
+Group=
+# User= does not inherit docker group membership unless listed here (docker.sock access).
+SupplementaryGroups=docker
+WorkingDirectory=%h/mowbot-setup
+Environment=HOME=%h
+ExecStart=/usr/libexec/docker/cli-plugins/docker-compose --env-file /etc/mowbot.env -f docker-compose.yml up mowbot_mapproxy
+ExecStop=/usr/libexec/docker/cli-plugins/docker-compose --env-file /etc/mowbot.env -f docker-compose.yml stop -t 30 mowbot_mapproxy
+Restart=on-failure
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

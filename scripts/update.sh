@@ -1,6 +1,24 @@
 #!/bin/bash
 set -e
 
+# Keep existing env variable if set, otherwise default to empty
+RESET_MOWBOT_DATA="${RESET_MOWBOT_DATA:-}"
+
+# Parse command line options
+while [[ "$#" -gt 0 ]]; do
+    case $1 in
+        -r|--reset-data) RESET_MOWBOT_DATA=true; shift ;;
+        -h|--help)
+            echo "Usage: $0 [options]"
+            echo "Options:"
+            echo "  -r, --reset-data   Reset mowbot_data by removing the existing directory and cloning fresh."
+            echo "  -h, --help         Show this help message."
+            exit 0
+            ;;
+        *) echo "Unknown parameter: $1"; exit 1 ;;
+    esac
+done
+
 echo "Updating Mowbot Stack..."
 
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." &> /dev/null && pwd)"
@@ -78,6 +96,52 @@ if [[ "$UPDATE_ENV" =~ ^[Yy]$ ]]; then
     echo "Saved to $ENV_FILE"
     echo ""
 fi
+
+# Update/reset mowbot_data repository
+DATA_HOST_DIR="/etc/mowbot_data"
+DATA_REPO_URL="https://github.com/serene4mr/mowbot_data"
+
+echo "Ensuring host data directory exists at $DATA_HOST_DIR ..."
+if [ -d "$DATA_HOST_DIR" ]; then
+    if [ -z "$RESET_MOWBOT_DATA" ]; then
+        if [ -t 0 ]; then
+            read -p "Found existing mowbot_data at $DATA_HOST_DIR. Reset to default (discard all local changes/files)? y/N (default: N): " INPUT_RESET_MOWBOT_DATA || INPUT_RESET_MOWBOT_DATA="n"
+        else
+            INPUT_RESET_MOWBOT_DATA="n"
+        fi
+    else
+        INPUT_RESET_MOWBOT_DATA="$RESET_MOWBOT_DATA"
+    fi
+
+    case "${INPUT_RESET_MOWBOT_DATA,,}" in
+        y|yes|true|1)
+            echo "Resetting mowbot_data by removing existing directory and cloning fresh..."
+            sudo rm -rf "$DATA_HOST_DIR"
+            echo "Cloning mowbot_data to $DATA_HOST_DIR ..."
+            sudo git clone "$DATA_REPO_URL" "$DATA_HOST_DIR"
+            ;;
+        *)
+            if [ -d "$DATA_HOST_DIR/.git" ]; then
+                echo "Updating mowbot_data at $DATA_HOST_DIR ..."
+                set +e
+                sudo git -C "$DATA_HOST_DIR" pull --ff-only
+                GIT_PULL_STATUS=$?
+                set -e
+                if [ $GIT_PULL_STATUS -ne 0 ]; then
+                    echo "Warning: git pull failed (possibly due to local modifications)."
+                    echo "Keeping current local mowbot_data files."
+                fi
+            else
+                echo "Keeping existing non-git directory at $DATA_HOST_DIR."
+            fi
+            ;;
+    esac
+else
+    echo "Cloning mowbot_data to $DATA_HOST_DIR ..."
+    sudo git clone "$DATA_REPO_URL" "$DATA_HOST_DIR"
+fi
+sudo chown -R "$COMPOSE_USER:$COMPOSE_GROUP" "$DATA_HOST_DIR"
+echo ""
 
 # Docker should already be logged in from install.sh
 compose() {

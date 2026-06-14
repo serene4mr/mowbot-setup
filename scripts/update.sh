@@ -124,7 +124,7 @@ if [ -d "$DATA_HOST_DIR" ]; then
             if [ -d "$DATA_HOST_DIR/.git" ]; then
                 echo "Updating mowbot_data at $DATA_HOST_DIR ..."
                 set +e
-                sudo git -C "$DATA_HOST_DIR" pull --ff-only
+                sudo -u "$COMPOSE_USER" git -C "$DATA_HOST_DIR" pull --ff-only
                 GIT_PULL_STATUS=$?
                 set -e
                 if [ $GIT_PULL_STATUS -ne 0 ]; then

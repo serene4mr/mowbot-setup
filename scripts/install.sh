@@ -282,17 +282,17 @@ DIR_ESC="${DIR//&/\\&}"
 sed -e "s|^User=.*|User=$SVC_USER|" \
     -e "s|^Group=.*|Group=$SVC_GROUP|" \
     -e "s|WorkingDirectory=.*|WorkingDirectory=$DIR_ESC|" \
-    "$DIR/services/mowbot_gui.service.example" | sudo tee "$SERVICE_FILE" > /dev/null
+    "$DIR/service_templates/mowbot_gui.service.template" | sudo tee "$SERVICE_FILE" > /dev/null
 
 sed -e "s|^User=.*|User=$SVC_USER|" \
     -e "s|^Group=.*|Group=$SVC_GROUP|" \
     -e "s|WorkingDirectory=.*|WorkingDirectory=$DIR_ESC|" \
-    "$DIR/services/mowbot_utility_webui.service.example" | sudo tee "$WEBUI_SERVICE_FILE" > /dev/null
+    "$DIR/service_templates/mowbot_utility_webui.service.template" | sudo tee "$WEBUI_SERVICE_FILE" > /dev/null
 
 sed -e "s|^User=.*|User=$SVC_USER|" \
     -e "s|^Group=.*|Group=$SVC_GROUP|" \
     -e "s|WorkingDirectory=.*|WorkingDirectory=$DIR_ESC|" \
-    "$DIR/services/mowbot_mapproxy.service.example" | sudo tee "$MAPPROXY_SERVICE_FILE" > /dev/null
+    "$DIR/service_templates/mowbot_mapproxy.service.template" | sudo tee "$MAPPROXY_SERVICE_FILE" > /dev/null
 
 # 7. Enable and start services
 echo "Enabling and starting Mowbot services..."

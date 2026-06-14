@@ -17,7 +17,7 @@ compose() {
 }
 
 # 1. Stop, disable and remove all systemd services starting with mowbot_
-SERVICES=$(find /etc/systemd/system/ -name "mowbot_*.service" -printf "%f\n" 2>/dev/null || true)
+SERVICES=$(find /etc/systemd/system/ -maxdepth 1 -name "mowbot_*.service" -printf "%f\n" 2>/dev/null || true)
 
 if [ -n "$SERVICES" ]; then
     for svc in $SERVICES; do

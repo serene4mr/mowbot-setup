@@ -80,4 +80,14 @@ if [[ "$UNINSTALL_MQTT" =~ ^[Yy]$ ]]; then
     sudo rm -f /etc/mosquitto/conf.d/mowbot.conf /etc/mosquitto/conf.d/hivemq-bridge.conf
 fi
 
+# 5. Optional: Remove mowbot_data directory
+DATA_HOST_DIR="/etc/mowbot_data"
+if [ -d "$DATA_HOST_DIR" ]; then
+    read -p "Do you want to remove the mowbot_data directory ($DATA_HOST_DIR) and all its contents? (y/N): " REMOVE_DATA
+    if [[ "$REMOVE_DATA" =~ ^[Yy]$ ]]; then
+        echo "Removing $DATA_HOST_DIR..."
+        sudo rm -rf "$DATA_HOST_DIR"
+    fi
+fi
+
 echo "Mowbot uninstalled successfully."

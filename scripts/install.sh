@@ -168,7 +168,7 @@ else
     echo "Copy mowbot.env.example to $ENV_FILE and edit, or answer the prompts below."
     read -p "Enter Manufacturer (default: MowbotTech): " INPUT_MB_MANUFACTURER
     read -p "Enter Robot ID (default: mowbot_001): " INPUT_MB_ROBOT_ID
-    read -p "Enter Model (t1/t2/t3, default: t2): " INPUT_MB_MODEL
+    read -p "Enter Model (t1/t2/t3/t4, default: t2): " INPUT_MB_MODEL
     case "${INPUT_MB_MODEL,,}" in
         t1)
             MB_ROBOT_MODEL_VALUE="mowbot_model_t1"
@@ -177,6 +177,10 @@ else
         t3)
             MB_ROBOT_MODEL_VALUE="mowbot_model_t3"
             MB_SENSOR_MODEL_VALUE="mowbot_sensor_kit_t3"
+            ;;
+        t4)
+            MB_ROBOT_MODEL_VALUE="mowbot_model_t4"
+            MB_SENSOR_MODEL_VALUE="mowbot_sensor_kit_t4"
             ;;
         *)
             MB_ROBOT_MODEL_VALUE="mowbot_model_t2"

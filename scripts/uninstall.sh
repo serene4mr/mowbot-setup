@@ -13,7 +13,7 @@ else
 fi
 COMPOSE_HOME="$(getent passwd "$COMPOSE_USER" | cut -d: -f6)"
 compose() {
-    HOME="$COMPOSE_HOME" docker compose --env-file /etc/mowbot.env -f docker-compose.yml "$@"
+    HOME="$COMPOSE_HOME" docker compose --env-file stack.env --env-file /etc/mowbot.env -f docker-compose.yml "$@"
 }
 
 # 1. Stop, disable and remove all systemd services starting with mowbot_

@@ -166,7 +166,6 @@ elif [ -f ".env" ]; then
 else
     echo "--- Hardware provisioning ($ENV_FILE) ---"
     echo "Copy mowbot.env.example to $ENV_FILE and edit, or answer the prompts below."
-    read -p "Enter ROS image tag (default: devel-jetson-l4t-r36.4-latest; pin a versioned tag on a robot): " INPUT_MB_IMAGE_TAG
     read -p "Enter Manufacturer (default: MowbotTech): " INPUT_MB_MANUFACTURER
     read -p "Enter Robot ID (default: mowbot_001): " INPUT_MB_ROBOT_ID
     read -p "Enter Model (t1/t2/t3/t4, default: t2): " INPUT_MB_MODEL
@@ -197,8 +196,6 @@ else
     esac
     TMP_ENV="$(mktemp)"
     {
-        echo "MB_IMAGE_TAG=${INPUT_MB_IMAGE_TAG:-devel-jetson-l4t-r36.4-latest}"
-        echo ""
         echo "MB_ROBOT_ID=${INPUT_MB_ROBOT_ID:-mowbot_001}"
         echo "MB_MANUFACTURER=${INPUT_MB_MANUFACTURER:-MowbotTech}"
         echo "MB_ROBOT_MODEL=${MB_ROBOT_MODEL_VALUE}"
@@ -224,10 +221,16 @@ if [ "$SVC_USER" = "root" ]; then
     echo "Warning: systemd User=root. Prefer running install as a normal user (use sudo only for apt/systemctl steps), or edit $SERVICE_FILE."
 fi
 
-# Standard host data path for all services.
+# 4. Runtime data at the commit this release pins (stack.env, MB_DATA_COMMIT).
+# shellcheck disable=SC1091
+source stack.env
+if [ -z "${MB_DATA_COMMIT:-}" ]; then
+    echo "Error: MB_DATA_COMMIT is not set in stack.env." >&2
+    exit 1
+fi
 DATA_HOST_DIR="/etc/mowbot_data"
 DATA_REPO_URL="https://github.com/serene4mr/mowbot_data"
-echo "Ensuring host data directory exists at $DATA_HOST_DIR ..."
+echo "Ensuring host data directory exists at $DATA_HOST_DIR (release pins $MB_DATA_COMMIT) ..."
 if [ -d "$DATA_HOST_DIR" ]; then
     if [ -z "${RESET_MOWBOT_DATA:-}" ]; then
         if [ -t 0 ]; then
@@ -244,20 +247,23 @@ if [ -d "$DATA_HOST_DIR" ]; then
             sudo rm -rf "$DATA_HOST_DIR"
             echo "Cloning mowbot_data to $DATA_HOST_DIR ..."
             sudo git clone "$DATA_REPO_URL" "$DATA_HOST_DIR"
+            sudo git -C "$DATA_HOST_DIR" checkout --quiet "$MB_DATA_COMMIT"
             ;;
         *)
             if [ -d "$DATA_HOST_DIR/.git" ]; then
-                echo "Updating mowbot_data at $DATA_HOST_DIR ..."
-                set +e
-                sudo -u "$SVC_USER" git -C "$DATA_HOST_DIR" pull --ff-only
-                GIT_PULL_STATUS=$?
-                set -e
-                if [ $GIT_PULL_STATUS -ne 0 ]; then
-                    echo "Warning: git pull failed (possibly due to local modifications)."
-                    echo "Keeping current local mowbot_data files."
+                if [ -n "$(sudo -u "$SVC_USER" git -C "$DATA_HOST_DIR" status --porcelain)" ]; then
+                    echo "Error: $DATA_HOST_DIR has local changes; not checking out $MB_DATA_COMMIT over them:" >&2
+                    sudo -u "$SVC_USER" git -C "$DATA_HOST_DIR" status --short >&2
+                    echo "Commit them (e.g. on a branch robot/<id>) or run again with RESET_MOWBOT_DATA=true." >&2
+                    exit 1
                 fi
+                echo "Checking out mowbot_data at $MB_DATA_COMMIT ..."
+                sudo -u "$SVC_USER" git -C "$DATA_HOST_DIR" fetch --quiet origin
+                sudo -u "$SVC_USER" git -C "$DATA_HOST_DIR" checkout --quiet "$MB_DATA_COMMIT"
             else
-                echo "Keeping existing non-git directory at $DATA_HOST_DIR."
+                echo "Error: $DATA_HOST_DIR exists but is not a git checkout; a release cannot pin it." >&2
+                echo "Move it aside or run again with RESET_MOWBOT_DATA=true." >&2
+                exit 1
             fi
             ;;
     esac
@@ -266,14 +272,16 @@ else
     sudo git clone "$DATA_REPO_URL" "$DATA_HOST_DIR"
 fi
 sudo chown -R "$SVC_USER:$SVC_GROUP" "$DATA_HOST_DIR"
+sudo -u "$SVC_USER" git -C "$DATA_HOST_DIR" checkout --quiet "$MB_DATA_COMMIT"
 
-# 5. Pull latest images (same env file as systemd / manual: docker compose --env-file /etc/mowbot.env)
-echo "Pulling latest Docker images..."
-HOME="$SVC_HOME" docker compose --env-file /etc/mowbot.env pull
+# 5. Pull the images this release pins (stack.env first, then the robot's own
+# /etc/mowbot.env; the same two files the systemd units use)
+echo "Pulling the Docker images of this release..."
+HOME="$SVC_HOME" docker compose --env-file stack.env --env-file /etc/mowbot.env pull
 
 # 5b. Create containers ahead of service start
 echo "Creating Docker containers..."
-HOME="$SVC_HOME" docker compose --env-file /etc/mowbot.env -f docker-compose.yml create
+HOME="$SVC_HOME" docker compose --env-file stack.env --env-file /etc/mowbot.env -f docker-compose.yml create
 
 # 6. Setup systemd services
 SERVICE_NAME="mowbot_gui.service"

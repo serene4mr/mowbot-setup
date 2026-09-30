@@ -44,6 +44,7 @@ if [[ "$UPDATE_ENV" =~ ^[Yy]$ ]]; then
     # shellcheck disable=SC1091
     source "$ENV_FILE"
     set +a
+    MB_IMAGE_TAG="${MB_IMAGE_TAG:-devel-jetson-l4t-r36.4-latest}"
     MB_ROBOT_ID="${MB_ROBOT_ID:-mowbot_001}"
     MB_MANUFACTURER="${MB_MANUFACTURER:-MowbotTech}"
     MB_ROBOT_MODEL="${MB_ROBOT_MODEL:-mowbot_model_t2}"
@@ -57,6 +58,8 @@ if [[ "$UPDATE_ENV" =~ ^[Yy]$ ]]; then
 
     echo "--- Update machine config ($ENV_FILE) ---"
     echo "Press Enter on each prompt to keep the current value."
+    read -p "Enter ROS image tag (current: $MB_IMAGE_TAG): " INPUT_MB_IMAGE_TAG
+    MB_IMAGE_TAG="${INPUT_MB_IMAGE_TAG:-$MB_IMAGE_TAG}"
     read -p "Enter Robot ID (current: $MB_ROBOT_ID): " INPUT_MB_ROBOT_ID
     MB_ROBOT_ID="${INPUT_MB_ROBOT_ID:-$MB_ROBOT_ID}"
     read -p "Enter Robot Model (current: $MB_ROBOT_MODEL): " INPUT_MB_ROBOT_MODEL
@@ -78,6 +81,8 @@ if [[ "$UPDATE_ENV" =~ ^[Yy]$ ]]; then
     fi
     TMP_ENV="$(mktemp)"
     {
+        echo "MB_IMAGE_TAG=$MB_IMAGE_TAG"
+        echo ""
         echo "MB_ROBOT_ID=$MB_ROBOT_ID"
         echo "MB_MANUFACTURER=$MB_MANUFACTURER"
         echo "MB_ROBOT_MODEL=$MB_ROBOT_MODEL"

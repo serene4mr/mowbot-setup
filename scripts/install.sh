@@ -166,6 +166,7 @@ elif [ -f ".env" ]; then
 else
     echo "--- Hardware provisioning ($ENV_FILE) ---"
     echo "Copy mowbot.env.example to $ENV_FILE and edit, or answer the prompts below."
+    read -p "Enter ROS image tag (default: devel-jetson-l4t-r36.4-latest; pin a versioned tag on a robot): " INPUT_MB_IMAGE_TAG
     read -p "Enter Manufacturer (default: MowbotTech): " INPUT_MB_MANUFACTURER
     read -p "Enter Robot ID (default: mowbot_001): " INPUT_MB_ROBOT_ID
     read -p "Enter Model (t1/t2/t3/t4, default: t2): " INPUT_MB_MODEL
@@ -196,6 +197,8 @@ else
     esac
     TMP_ENV="$(mktemp)"
     {
+        echo "MB_IMAGE_TAG=${INPUT_MB_IMAGE_TAG:-devel-jetson-l4t-r36.4-latest}"
+        echo ""
         echo "MB_ROBOT_ID=${INPUT_MB_ROBOT_ID:-mowbot_001}"
         echo "MB_MANUFACTURER=${INPUT_MB_MANUFACTURER:-MowbotTech}"
         echo "MB_ROBOT_MODEL=${MB_ROBOT_MODEL_VALUE}"

@@ -86,6 +86,18 @@ What software a robot runs is one committed file, [stack.env](stack.env): the RO
 
 To release: change the tags and digests in `stack.env` in one commit (digests from `docker buildx imagetools inspect <image:tag> --format '{{.Manifest.Digest}}'`), tag it, and on each robot check that tag out and run `update.sh`. The ROS image's own source manifest lives in the `mowbot` repository (`releases/<version>.repos`, baked into the image as `/opt/mowbot/manifest.repos`).
 
+## GPU and TensorRT engines
+
+The four ROS containers run with `runtime: nvidia` (CUDA and TensorRT libraries come from the host), and `scripts/check_host.sh` — run by install and update — refuses a host that is not L4T R36 or has no `nvidia` docker runtime, and prints the host's L4T release each time.
+
+A TensorRT `.engine` is bound to the TensorRT version that built it (the `runtime` image carries 10.3) and tuned to the GPU, so engines are built on the robot, once, from an ONNX model under `/etc/mowbot_data`:
+
+```bash
+scripts/build_engine.sh model_artifacts/<model>.onnx model_artifacts/<model>.engine --fp16
+```
+
+It runs `trtexec` from the ROS image pinned in `stack.env`. Never copy an engine from a machine with another TensorRT.
+
 ## Update
 
 ### Run

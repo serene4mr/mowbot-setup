@@ -7,6 +7,9 @@ echo "Starting Mowbot Setup..."
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." &> /dev/null && pwd)"
 cd "$DIR"
 
+# Host checks: L4T release and the nvidia docker runtime (scripts/check_host.sh).
+./scripts/check_host.sh
+
 # 1. Credentials
 if [ -z "$GHCR_USERNAME" ] || [ -z "$GHCR_PAT" ]; then
     echo "This script requires a GitHub Username and Read-Only PAT."

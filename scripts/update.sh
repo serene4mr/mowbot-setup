@@ -36,6 +36,9 @@ fi
 COMPOSE_GROUP="$(id -gn "$COMPOSE_USER")"
 COMPOSE_HOME="$(getent passwd "$COMPOSE_USER" | cut -d: -f6)"
 
+# Host checks: L4T release and the nvidia docker runtime (scripts/check_host.sh).
+./scripts/check_host.sh
+
 ENV_FILE="/etc/mowbot.env"
 if [ ! -f "$ENV_FILE" ]; then
     echo "Error: $ENV_FILE not found. Run scripts/install.sh first."

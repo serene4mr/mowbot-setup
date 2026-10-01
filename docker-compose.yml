@@ -58,6 +58,9 @@ services:
     network_mode: host
     ipc: host # share host SHM for Fast DDS/Cyclone DDS
     pid: host # optional but recommended with SHM
+    # CUDA/TensorRT come from the host through the nvidia runtime; asking for
+    # it here fails loudly on a host without it instead of running GPU-less.
+    runtime: nvidia
     privileged: true
     command:
       - bash
@@ -93,6 +96,9 @@ services:
     network_mode: host
     ipc: host
     pid: host
+    # CUDA/TensorRT come from the host through the nvidia runtime; asking for
+    # it here fails loudly on a host without it instead of running GPU-less.
+    runtime: nvidia
     privileged: true
     command:
       - bash
@@ -125,6 +131,9 @@ services:
     network_mode: host
     ipc: host
     pid: host
+    # CUDA/TensorRT come from the host through the nvidia runtime; asking for
+    # it here fails loudly on a host without it instead of running GPU-less.
+    runtime: nvidia
     privileged: true
     command:
       - bash
@@ -158,6 +167,9 @@ services:
     network_mode: host
     ipc: host
     pid: host
+    # CUDA/TensorRT come from the host through the nvidia runtime; asking for
+    # it here fails loudly on a host without it instead of running GPU-less.
+    runtime: nvidia
     privileged: true
     command:
       - bash

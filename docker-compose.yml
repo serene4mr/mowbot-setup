@@ -49,7 +49,9 @@ services:
       - ROS_DISTRO=${ROS_DISTRO:-humble}
       - ROS_DOMAIN_ID=0
       - ROS_LOCALHOST_ONLY=0 # ensure DDS not restricted to loopback
-      # - RMW_IMPLEMENTATION=rmw_fastrtps_cpp  # uncomment if you want to force
+      # Set here on purpose: the image's base used to set it with ENV and nothing
+      # else did. The whole stack and the micro-ROS agent must agree on the RMW.
+      - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
     volumes:
       - ${MB_DATA_PATH:-/etc/mowbot_data}:/etc/mowbot_data
       - /dev:/dev
@@ -83,7 +85,9 @@ services:
       - ROS_DISTRO=${ROS_DISTRO:-humble}
       - ROS_DOMAIN_ID=0
       - ROS_LOCALHOST_ONLY=0
-      # - RMW_IMPLEMENTATION=rmw_fastrtps_cpp
+      # Set here on purpose: the image's base used to set it with ENV and nothing
+      # else did. The whole stack and the micro-ROS agent must agree on the RMW.
+      - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
     volumes:
       - ${MB_DATA_PATH:-/etc/mowbot_data}:/etc/mowbot_data
     network_mode: host
@@ -113,7 +117,9 @@ services:
       - ROS_DISTRO=${ROS_DISTRO:-humble}
       - ROS_DOMAIN_ID=0
       - ROS_LOCALHOST_ONLY=0
-      # - RMW_IMPLEMENTATION=rmw_fastrtps_cpp
+      # Set here on purpose: the image's base used to set it with ENV and nothing
+      # else did. The whole stack and the micro-ROS agent must agree on the RMW.
+      - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
     volumes:
       - ${MB_DATA_PATH:-/etc/mowbot_data}:/etc/mowbot_data
     network_mode: host
@@ -144,7 +150,9 @@ services:
       - ROS_DISTRO=${ROS_DISTRO:-humble}
       - ROS_DOMAIN_ID=0
       - ROS_LOCALHOST_ONLY=0
-      # - RMW_IMPLEMENTATION=rmw_fastrtps_cpp
+      # Set here on purpose: the image's base used to set it with ENV and nothing
+      # else did. The whole stack and the micro-ROS agent must agree on the RMW.
+      - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
     volumes:
       - ${MB_DATA_PATH:-/etc/mowbot_data}:/etc/mowbot_data
     network_mode: host

@@ -47,7 +47,7 @@ services:
     # Keep the image's entrypoint (likely does ROS setup); only override command.
     environment:
       - ROS_DISTRO=${ROS_DISTRO:-humble}
-      - ROS_DOMAIN_ID=0
+      - ROS_DOMAIN_ID=${MB_ROS_DOMAIN_ID:-0}
       - ROS_LOCALHOST_ONLY=0 # ensure DDS not restricted to loopback
       # Set here on purpose: the image's base used to set it with ENV and nothing
       # else did. The whole stack and the micro-ROS agent must agree on the RMW.
@@ -86,7 +86,7 @@ services:
     container_name: mowbot_localization
     environment:
       - ROS_DISTRO=${ROS_DISTRO:-humble}
-      - ROS_DOMAIN_ID=0
+      - ROS_DOMAIN_ID=${MB_ROS_DOMAIN_ID:-0}
       - ROS_LOCALHOST_ONLY=0
       # Set here on purpose: the image's base used to set it with ENV and nothing
       # else did. The whole stack and the micro-ROS agent must agree on the RMW.
@@ -121,7 +121,7 @@ services:
     container_name: mowbot_navigation
     environment:
       - ROS_DISTRO=${ROS_DISTRO:-humble}
-      - ROS_DOMAIN_ID=0
+      - ROS_DOMAIN_ID=${MB_ROS_DOMAIN_ID:-0}
       - ROS_LOCALHOST_ONLY=0
       # Set here on purpose: the image's base used to set it with ENV and nothing
       # else did. The whole stack and the micro-ROS agent must agree on the RMW.
@@ -142,7 +142,6 @@ services:
         # Escape $ so Compose doesn't interpolate at parse-time; container bash expands it.
         source /opt/ros/$$ROS_DISTRO/setup.bash
         env | grep -E 'ROS_|RMW' || true
-        export ROS_DOMAIN_ID=0
         ros2 launch mowbot_launch mowbot.launch.py \
           robot_id:=${MB_ROBOT_ID:-mowbot_001} \
           manufacturer:=${MB_MANUFACTURER:-MowbotTech} \
@@ -157,7 +156,7 @@ services:
     container_name: mowbot_app
     environment:
       - ROS_DISTRO=${ROS_DISTRO:-humble}
-      - ROS_DOMAIN_ID=0
+      - ROS_DOMAIN_ID=${MB_ROS_DOMAIN_ID:-0}
       - ROS_LOCALHOST_ONLY=0
       # Set here on purpose: the image's base used to set it with ENV and nothing
       # else did. The whole stack and the micro-ROS agent must agree on the RMW.

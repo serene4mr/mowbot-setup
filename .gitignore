@@ -1,5 +1,4 @@
 *.env
-!stack.env
 *.service
 mowbot_data
 mapproxy/

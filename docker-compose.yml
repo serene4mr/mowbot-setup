@@ -1,6 +1,11 @@
+# FROZEN (2026-10-03): this is the last version of the system as robots were
+# installed until then. Every image is pinned by digest, so an install or an
+# update from this branch always yields the same set. Do not move these pins;
+# the next system is on the branch `next` and on release tags. See README.md.
 services:
   mowbot_gui:
-    image: ghcr.io/serene4mr/mowbot-gui:${MB_GUI_IMAGE_TAG:?set in stack.env}@${MB_GUI_IMAGE_DIGEST:?set in stack.env}
+    # GUI of 2026-07-14 (commit 96ae224)
+    image: ghcr.io/serene4mr/mowbot-gui:latest@sha256:e66832af25b672d7956b430f453f06dec2964e2336393e622c9d1fc3bd14db25
     container_name: mowbot_gui
     network_mode: host
     privileged: true
@@ -31,7 +36,8 @@ services:
 
 
   mowbot_uros_agent:
-    image: microros/micro-ros-agent:humble
+    # arm64 image of 2025-09-11, the one the base controller was tested with
+    image: microros/micro-ros-agent:humble@sha256:16280d0753fdce81413ed6280b93f3a800582dd2230620408c86b1b24ecb0686
     container_name: mowbot_uros_agent
     network_mode: host
     stdin_open: true
@@ -42,25 +48,20 @@ services:
       - "8888"
 
   mowbot_bringup_and_sensing:
-    image: ghcr.io/serene4mr/mowbot:${MB_IMAGE_TAG:?set in stack.env}@${MB_IMAGE_DIGEST:?set in stack.env}
+    image: ghcr.io/serene4mr/mowbot:devel-jetson-l4t-r36.4-latest@sha256:468e088357d446a2b64ded94e8aa72d626433d200e21c4326c1d3d8d0a0e9842
     container_name: mowbot_bringup_and_sensing
     # Keep the image's entrypoint (likely does ROS setup); only override command.
     environment:
       - ROS_DISTRO=${ROS_DISTRO:-humble}
-      - ROS_DOMAIN_ID=${MB_ROS_DOMAIN_ID:-0}
+      - ROS_DOMAIN_ID=0
       - ROS_LOCALHOST_ONLY=0 # ensure DDS not restricted to loopback
-      # Set here on purpose: the image's base used to set it with ENV and nothing
-      # else did. The whole stack and the micro-ROS agent must agree on the RMW.
-      - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+      # - RMW_IMPLEMENTATION=rmw_fastrtps_cpp  # uncomment if you want to force
     volumes:
       - ${MB_DATA_PATH:-/etc/mowbot_data}:/etc/mowbot_data
       - /dev:/dev
     network_mode: host
     ipc: host # share host SHM for Fast DDS/Cyclone DDS
     pid: host # optional but recommended with SHM
-    # CUDA/TensorRT come from the host through the nvidia runtime; asking for
-    # it here fails loudly on a host without it instead of running GPU-less.
-    runtime: nvidia
     privileged: true
     command:
       - bash
@@ -82,23 +83,18 @@ services:
           launch_localization:=false launch_nav2:=false launch_app:=false
 
   mowbot_localization:
-    image: ghcr.io/serene4mr/mowbot:${MB_IMAGE_TAG:?set in stack.env}@${MB_IMAGE_DIGEST:?set in stack.env}
+    image: ghcr.io/serene4mr/mowbot:devel-jetson-l4t-r36.4-latest@sha256:468e088357d446a2b64ded94e8aa72d626433d200e21c4326c1d3d8d0a0e9842
     container_name: mowbot_localization
     environment:
       - ROS_DISTRO=${ROS_DISTRO:-humble}
-      - ROS_DOMAIN_ID=${MB_ROS_DOMAIN_ID:-0}
+      - ROS_DOMAIN_ID=0
       - ROS_LOCALHOST_ONLY=0
-      # Set here on purpose: the image's base used to set it with ENV and nothing
-      # else did. The whole stack and the micro-ROS agent must agree on the RMW.
-      - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+      # - RMW_IMPLEMENTATION=rmw_fastrtps_cpp
     volumes:
       - ${MB_DATA_PATH:-/etc/mowbot_data}:/etc/mowbot_data
     network_mode: host
     ipc: host
     pid: host
-    # CUDA/TensorRT come from the host through the nvidia runtime; asking for
-    # it here fails loudly on a host without it instead of running GPU-less.
-    runtime: nvidia
     privileged: true
     command:
       - bash
@@ -117,23 +113,18 @@ services:
           launch_localization:=true launch_nav2:=false launch_app:=false
 
   mowbot_navigation:
-    image: ghcr.io/serene4mr/mowbot:${MB_IMAGE_TAG:?set in stack.env}@${MB_IMAGE_DIGEST:?set in stack.env}
+    image: ghcr.io/serene4mr/mowbot:devel-jetson-l4t-r36.4-latest@sha256:468e088357d446a2b64ded94e8aa72d626433d200e21c4326c1d3d8d0a0e9842
     container_name: mowbot_navigation
     environment:
       - ROS_DISTRO=${ROS_DISTRO:-humble}
-      - ROS_DOMAIN_ID=${MB_ROS_DOMAIN_ID:-0}
+      - ROS_DOMAIN_ID=0
       - ROS_LOCALHOST_ONLY=0
-      # Set here on purpose: the image's base used to set it with ENV and nothing
-      # else did. The whole stack and the micro-ROS agent must agree on the RMW.
-      - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+      # - RMW_IMPLEMENTATION=rmw_fastrtps_cpp
     volumes:
       - ${MB_DATA_PATH:-/etc/mowbot_data}:/etc/mowbot_data
     network_mode: host
     ipc: host
     pid: host
-    # CUDA/TensorRT come from the host through the nvidia runtime; asking for
-    # it here fails loudly on a host without it instead of running GPU-less.
-    runtime: nvidia
     privileged: true
     command:
       - bash
@@ -142,6 +133,7 @@ services:
         # Escape $ so Compose doesn't interpolate at parse-time; container bash expands it.
         source /opt/ros/$$ROS_DISTRO/setup.bash
         env | grep -E 'ROS_|RMW' || true
+        export ROS_DOMAIN_ID=0
         ros2 launch mowbot_launch mowbot.launch.py \
           robot_id:=${MB_ROBOT_ID:-mowbot_001} \
           manufacturer:=${MB_MANUFACTURER:-MowbotTech} \
@@ -152,23 +144,18 @@ services:
           launch_localization:=false launch_nav2:=true launch_app:=false
 
   mowbot_app:
-    image: ghcr.io/serene4mr/mowbot:${MB_IMAGE_TAG:?set in stack.env}@${MB_IMAGE_DIGEST:?set in stack.env}
+    image: ghcr.io/serene4mr/mowbot:devel-jetson-l4t-r36.4-latest@sha256:468e088357d446a2b64ded94e8aa72d626433d200e21c4326c1d3d8d0a0e9842
     container_name: mowbot_app
     environment:
       - ROS_DISTRO=${ROS_DISTRO:-humble}
-      - ROS_DOMAIN_ID=${MB_ROS_DOMAIN_ID:-0}
+      - ROS_DOMAIN_ID=0
       - ROS_LOCALHOST_ONLY=0
-      # Set here on purpose: the image's base used to set it with ENV and nothing
-      # else did. The whole stack and the micro-ROS agent must agree on the RMW.
-      - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+      # - RMW_IMPLEMENTATION=rmw_fastrtps_cpp
     volumes:
       - ${MB_DATA_PATH:-/etc/mowbot_data}:/etc/mowbot_data
     network_mode: host
     ipc: host
     pid: host
-    # CUDA/TensorRT come from the host through the nvidia runtime; asking for
-    # it here fails loudly on a host without it instead of running GPU-less.
-    runtime: nvidia
     privileged: true
     command:
       - bash
@@ -187,7 +174,8 @@ services:
           launch_localization:=false launch_nav2:=false launch_app:=true
 
   mowbot_utility_webui:
-    image: ghcr.io/serene4mr/mowbot-utility-webui:latest
+    # panel of 2026-06-06
+    image: ghcr.io/serene4mr/mowbot-utility-webui:latest@sha256:fddf3377278902852781b82691f80125fb36f728eb178c1925f8f5a5cb9077b7
     container_name: mowbot_utility_webui
     ports:
       - "8501:8501"
@@ -198,7 +186,8 @@ services:
     restart: always
 
   mowbot_mapproxy:
-    image: kartoza/mapproxy
+    # third-party image as of 2026-10-03
+    image: kartoza/mapproxy:latest@sha256:fd998dab5f952df5baa73ba77978832ca382eee4471d463786692c58b18daee7
     container_name: mowbot_mapproxy
     ports:
       - "8080:8080"

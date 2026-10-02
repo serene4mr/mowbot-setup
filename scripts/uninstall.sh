@@ -13,7 +13,7 @@ else
 fi
 COMPOSE_HOME="$(getent passwd "$COMPOSE_USER" | cut -d: -f6)"
 compose() {
-    HOME="$COMPOSE_HOME" docker compose --env-file stack.env --env-file /etc/mowbot.env -f docker-compose.yml "$@"
+    HOME="$COMPOSE_HOME" docker compose --env-file /etc/mowbot.env -f docker-compose.yml "$@"
 }
 
 # 1. Stop, disable and remove all systemd services starting with mowbot_
@@ -57,7 +57,9 @@ fi
 read -p "Do you want to remove all Docker images used by Mowbot? (y/N): " REMOVE_IMAGES
 if [[ "$REMOVE_IMAGES" =~ ^[Yy]$ ]]; then
     echo "Force removing Docker images..."
-    IMAGES=$(docker images --format "{{.Repository}}:{{.Tag}}" | grep -E "mowbot|mapproxy|micro-ros-agent" || true)
+    # By image ID: an image pulled by digest has no tag ("repo:<none>"), which
+    # docker rmi cannot remove by name.
+    IMAGES=$(docker images --format "{{.ID}} {{.Repository}}" | grep -E "mowbot|mapproxy|micro-ros-agent" | awk '{print $1}' | sort -u || true)
     if [ -n "$IMAGES" ]; then
         docker rmi -f $IMAGES || true
     fi

@@ -12,10 +12,6 @@ while [[ "$#" -gt 0 ]]; do
             echo "Usage: $0 [options]"
             echo "Options:"
             echo "  -r, --reset-data   Reset mowbot_data by removing the existing directory and cloning fresh."
-            echo ""
-            echo "Applies the release checked out in this repository (stack.env): to change"
-            echo "release, git checkout the tag or commit first, then run this. Rolling back is"
-            echo "the same with the previous tag."
             echo "  -h, --help         Show this help message."
             exit 0
             ;;
@@ -36,30 +32,11 @@ fi
 COMPOSE_GROUP="$(id -gn "$COMPOSE_USER")"
 COMPOSE_HOME="$(getent passwd "$COMPOSE_USER" | cut -d: -f6)"
 
-# Host checks: L4T release and the nvidia docker runtime (scripts/check_host.sh).
-./scripts/check_host.sh
-
 ENV_FILE="/etc/mowbot.env"
 if [ ! -f "$ENV_FILE" ]; then
     echo "Error: $ENV_FILE not found. Run scripts/install.sh first."
     exit 1
 fi
-
-# The release being applied, and a warning if the robot's own file overrides it
-# (it is read after stack.env by compose, so it would win silently).
-# shellcheck disable=SC1091
-source stack.env
-for k in MB_IMAGE_TAG MB_IMAGE_DIGEST MB_GUI_IMAGE_TAG MB_GUI_IMAGE_DIGEST MB_DATA_COMMIT; do
-    if grep -qE "^${k}=" "$ENV_FILE"; then
-        echo "Warning: $ENV_FILE sets $k, overriding the release in stack.env. Remove it unless this is deliberate."
-    fi
-done
-if [ -z "${MB_DATA_COMMIT:-}" ] || [ -z "${MB_IMAGE_TAG:-}" ]; then
-    echo "Error: stack.env must set MB_IMAGE_TAG and MB_DATA_COMMIT." >&2
-    exit 1
-fi
-echo "Release: $(git describe --tags --always 2>/dev/null) — ROS $MB_IMAGE_TAG, GUI ${MB_GUI_IMAGE_TAG:0:7}, data ${MB_DATA_COMMIT:0:7}, firmware ${MB_FIRMWARE:-?}"
-echo ""
 
 read -p "Update mowbot.env settings (robot/MQTT options from install)? (y/N): " UPDATE_ENV
 if [[ "$UPDATE_ENV" =~ ^[Yy]$ ]]; then
@@ -124,7 +101,7 @@ fi
 DATA_HOST_DIR="/etc/mowbot_data"
 DATA_REPO_URL="https://github.com/serene4mr/mowbot_data"
 
-echo "Ensuring host data directory exists at $DATA_HOST_DIR (release pins $MB_DATA_COMMIT) ..."
+echo "Ensuring host data directory exists at $DATA_HOST_DIR ..."
 if [ -d "$DATA_HOST_DIR" ]; then
     if [ -z "$RESET_MOWBOT_DATA" ]; then
         if [ -t 0 ]; then
@@ -142,40 +119,33 @@ if [ -d "$DATA_HOST_DIR" ]; then
             sudo rm -rf "$DATA_HOST_DIR"
             echo "Cloning mowbot_data to $DATA_HOST_DIR ..."
             sudo git clone "$DATA_REPO_URL" "$DATA_HOST_DIR"
-            sudo git -C "$DATA_HOST_DIR" checkout --quiet "$MB_DATA_COMMIT"
             ;;
         *)
             if [ -d "$DATA_HOST_DIR/.git" ]; then
-                # Local edits are not silently kept any more: a robot must run
-                # the data the release names, and drift must be visible.
-                if [ -n "$(sudo -u "$COMPOSE_USER" git -C "$DATA_HOST_DIR" status --porcelain)" ]; then
-                    echo "Error: $DATA_HOST_DIR has local changes; not checking out $MB_DATA_COMMIT over them:" >&2
-                    sudo -u "$COMPOSE_USER" git -C "$DATA_HOST_DIR" status --short >&2
-                    echo "Commit them (e.g. on a branch robot/<id>) and make a release that pins that commit," >&2
-                    echo "or discard them with: $0 --reset-data" >&2
-                    exit 1
+                echo "Updating mowbot_data at $DATA_HOST_DIR ..."
+                set +e
+                sudo -u "$COMPOSE_USER" git -C "$DATA_HOST_DIR" pull --ff-only
+                GIT_PULL_STATUS=$?
+                set -e
+                if [ $GIT_PULL_STATUS -ne 0 ]; then
+                    echo "Warning: git pull failed (possibly due to local modifications)."
+                    echo "Keeping current local mowbot_data files."
                 fi
-                echo "Checking out mowbot_data at $MB_DATA_COMMIT ..."
-                sudo -u "$COMPOSE_USER" git -C "$DATA_HOST_DIR" fetch --quiet origin
-                sudo -u "$COMPOSE_USER" git -C "$DATA_HOST_DIR" checkout --quiet "$MB_DATA_COMMIT"
             else
-                echo "Error: $DATA_HOST_DIR exists but is not a git checkout; a release cannot pin it." >&2
-                echo "Move it aside or run: $0 --reset-data" >&2
-                exit 1
+                echo "Keeping existing non-git directory at $DATA_HOST_DIR."
             fi
             ;;
     esac
 else
     echo "Cloning mowbot_data to $DATA_HOST_DIR ..."
     sudo git clone "$DATA_REPO_URL" "$DATA_HOST_DIR"
-    sudo git -C "$DATA_HOST_DIR" checkout --quiet "$MB_DATA_COMMIT"
 fi
 sudo chown -R "$COMPOSE_USER:$COMPOSE_GROUP" "$DATA_HOST_DIR"
 echo ""
 
 # Docker should already be logged in from install.sh
 compose() {
-    HOME="$COMPOSE_HOME" docker compose --env-file stack.env --env-file /etc/mowbot.env -f docker-compose.yml "$@"
+    HOME="$COMPOSE_HOME" docker compose --env-file /etc/mowbot.env -f docker-compose.yml "$@"
 }
 
 STACK_SERVICES=(
@@ -186,7 +156,7 @@ STACK_SERVICES=(
     mowbot_app
 )
 
-echo "Pulling the Docker images of this release from ghcr.io..."
+echo "Pulling latest Docker images from ghcr.io..."
 compose pull
 
 echo "Recreating stack containers without starting (same as install; start manually when ready)..."

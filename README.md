@@ -90,7 +90,7 @@ To release: change the tags and digests in `stack.env` in one commit (digests fr
 
 ## GPU and TensorRT engines
 
-The four ROS containers run with `runtime: nvidia` (CUDA and TensorRT libraries come from the host), and `scripts/check_host.sh` — run by install and update — refuses a host that is not L4T R36 or has no `nvidia` docker runtime, and prints the host's L4T release each time.
+The four ROS containers run with `runtime: nvidia` (CUDA and TensorRT libraries come from the host), and `scripts/check_host.sh` — run by install and update — refuses a host that is not L4T R36 or has no `nvidia` docker runtime, and prints the host's L4T release each time. It warns when the host is not the exact release in `stack.env` (`MB_L4T_RELEASE`, the release the stack was tested on: R36.5.2) and when the L4T kernel is not on hold (`sudo apt-mark hold nvidia-l4t-kernel nvidia-l4t-kernel-dtbs nvidia-l4t-kernel-headers`): a kernel upgrade drops out-of-tree USB-serial drivers.
 
 A TensorRT `.engine` is bound to the TensorRT version that built it (the `runtime` image carries 10.3) and tuned to the GPU, so engines are built on the robot, once, from an ONNX model under `/etc/mowbot_data`:
 

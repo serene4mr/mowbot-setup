@@ -65,6 +65,8 @@ sudo ./create_udev_rules.sh
    - `/dev/MB-UM982-RTCM`
    - `/dev/MB-HWT905`
    - `/dev/MB-RPLIDAR-C2`
+   - `/dev/MB-HITUNE` — **not active yet**: the rule is in the file, commented out, until the USB port of the HiTUNE-I mini on the T4 is known
+4. Sets the latency timer of every FTDI FT232R to 8 ms (the HiTUNE-I mini needs it for 100 Hz data without bursts).
 
 ### Verify
 
@@ -112,7 +114,7 @@ Rolling back is the same with the previous tag.
 ### What It Does
 
 1. Reads `stack.env` and prints the release it is about to apply; warns if `/etc/mowbot.env` overrides any of its keys.
-2. Optionally re-runs the `/etc/mowbot.env` prompts from install (robot ID/model, MQTT settings); press Enter to keep each current value.
+2. Optionally re-runs the `/etc/mowbot.env` prompts from install (robot ID/model, MQTT settings); press Enter to keep each current value. Settings it does not ask about (`MB_ROS_DOMAIN_ID`, for one) are kept in the rewritten file.
 3. Checks `/etc/mowbot_data` out at the commit the release pins. **It refuses to run over local changes there** and lists them: commit them (for example on a branch `robot/<id>`) and make a release that pins that commit, or discard them with `--reset-data`. Silent drift between robots is exactly what this prevents.
 4. Pulls the pinned images with `docker compose --env-file stack.env --env-file /etc/mowbot.env pull`.
 5. Recreates the ROS stack containers (`mowbot_uros_agent`, bringup, localization, navigation, app) with `up --force-recreate --no-start` (new images, left stopped).

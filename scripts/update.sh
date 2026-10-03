@@ -113,6 +113,15 @@ if [[ "$UPDATE_ENV" =~ ^[Yy]$ ]]; then
         echo "MB_MQTT_PASSWORD=$MB_MQTT_PASSWORD"
         echo ""
         echo "MB_DATA_PATH=$MB_DATA_PATH"
+        # Keep every other setting of the old file (MB_ROS_DOMAIN_ID, for one):
+        # the prompts above cover only some keys, and a rewrite must not drop the rest.
+        KEPT=$(grep -E '^[A-Za-z_][A-Za-z0-9_]*=' "$ENV_FILE" \
+            | grep -vE '^(MB_ROBOT_ID|MB_MANUFACTURER|MB_ROBOT_MODEL|MB_SENSOR_MODEL|MB_MQTT_HOST|MB_MQTT_PORT|MB_MQTT_USE_TLS|MB_MQTT_USER|MB_MQTT_PASSWORD|MB_DATA_PATH)=' || true)
+        if [ -n "$KEPT" ]; then
+            echo ""
+            echo "# kept from the previous file"
+            echo "$KEPT"
+        fi
     } > "$TMP_ENV"
     sudo install -m 600 -o "$COMPOSE_USER" -g "$COMPOSE_GROUP" "$TMP_ENV" "$ENV_FILE"
     rm -f "$TMP_ENV"

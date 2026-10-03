@@ -4,6 +4,15 @@ SUBSYSTEM=="tty", ENV{ID_PATH}=="platform-3610000.usb-usb-0:2.2.4:1.0", MODE="06
 
 # IMUs
 SUBSYSTEM=="tty", ENV{ID_PATH}=="platform-3610000.usb-usb-0:2.1.3:1.0", MODE="0666", SYMLINK+="MB-HWT905"
+# ARNtek HiTUNE-I mini (the T4 with its new sensor setup: a variant whose imu
+# is hitune_i_mini). Not active yet: the USB port it is plugged into on the T4
+# is not known. Once it is, set ID_PATH (udevadm info -q property -n
+# /dev/ttyUSBn | grep ID_PATH) and remove the leading '#'.
+#SUBSYSTEM=="tty", ENV{ID_PATH}=="<T4 port of the HiTUNE>", MODE="0666", SYMLINK+="MB-HITUNE"
+# Its FTDI FT232R must deliver 100 Hz data without bursts: latency timer 8 ms
+# instead of the kernel's 16 (ARNtek's rule). Applies to every FT232R; harmless
+# for other devices, which only see their data sooner.
+ACTION=="add|change", SUBSYSTEM=="usb-serial", ATTRS{idVendor}=="0403", ATTRS{idProduct}=="6001", ATTR{latency_timer}="8"
 
 # Lasers (Updated with your exact ID_PATH)
 SUBSYSTEM=="tty", ENV{ID_PATH}=="platform-3610000.usb-usb-0:2.1.4:1.0", MODE="0666", SYMLINK+="MB-RPLIDAR-C2"
